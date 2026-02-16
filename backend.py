@@ -1,9 +1,12 @@
 from google import genai
 
-client = genai.Client(api_key="AIzaSyCaB0DSWgeUfLNaFj9EzFq6vkdhYeJMirk")
+API_KEY = "AIzaSyDLXw7TU7ntqZ52NhZ-bNO72qThVNs9I6I"
+
+client = genai.Client(api_key=API_KEY)
+print("Using API key:", API_KEY)
 
 response = client.models.generate_content(
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     contents="Say hello in a creative way."
 )
 
