@@ -11,9 +11,9 @@ Our venture helps prepare individuals who are on a path to retirement and want t
 
 ---
 ## Link to Latest Docs
-**PRD** - 
-**Spike Plan** -
-**Pitch Deck** - 
+[**PRD**]
+[**Spike Plan**]
+[**Pitch Deck**](https://github.com/jcastillo0220/Retirement-Readiness/blob/bbb02bedf890d70adcc42897e60de980f2cbb1ea/docs/Pitch%20Deck.pdf)
 
 ## 🛠️ How to Run the Project
 ### Backend
