@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Request
 from google import genai
 
+# uvicorn endpoint:app --reload
+# ^This will run the program in development mode. Open http://localhost:8000/docs to view the API documentation and test the endpoint.
+
 # Do not share this API key with anyone. Keep it secret and secure.
 API_KEY = "AIzaSyDLXw7TU7ntqZ52NhZ-bNO72qThVNs9I6I"
 client = genai.Client(api_key=API_KEY)
@@ -23,13 +26,12 @@ async def generate(req: Request):
     user_question = data["question"]
 
     prompt = f"""
-    You are a financial education assistant.
-    Question: {user_question}
-    Provide beginner-friendly guidance.
+    {user_question}
+    Make it as short as possible and use simple language.
     """
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=prompt
     )
 
