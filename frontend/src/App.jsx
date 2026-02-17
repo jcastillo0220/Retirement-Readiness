@@ -5,9 +5,9 @@ export default function AIChat() {
   const [answer, setAnswer] = useState("");
 
   async function handleAsk() {
-    const res = await askAI(
-      "How should I start saving money?"
-    );
+    console.log("Button clicked");
+    const res = await askAI("How should I start saving money?");
+    console.log("Response from backend:", res);
     setAnswer(res.answer);
   }
 

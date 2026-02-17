@@ -6,7 +6,16 @@ API_KEY = "AIzaSyDLXw7TU7ntqZ52NhZ-bNO72qThVNs9I6I"
 client = genai.Client(api_key=API_KEY)
 
 app = FastAPI()
-model = genai.GenerativeModel("gemini-2.0-flash")
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or ["http://localhost:5173"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/api/ai/generate")
 async def generate(req: Request):
@@ -19,6 +28,9 @@ async def generate(req: Request):
     Provide beginner-friendly guidance.
     """
 
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt
+    )
 
     return {"answer": response.text}
