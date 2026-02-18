@@ -8,22 +8,40 @@ export default function AIChat() {
   const [answer, setAnswer] = useState("");
   const [suggestedButtons, setSuggestedButtons] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState("");
 
-  async function handleAsk(question) {
-    setLoading(true);
+ async function handleAsk(question) {
+  setLoading(true);
 
-    const prompt =
-      typeof question === "string"
-        ? question
-        : "can you explain what is Roth IRA." +
-          "Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira";
+  const prompt =
+    typeof question === "string"
+      ? question
+      : "can you explain what is Roth IRA." +
+        "Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira";
 
-    const res = await askAI(prompt);
+  // Save the question the user clicked
+  setSelectedQuestion(prompt);
 
-    setAnswer(res.answer);
-    setSuggestedButtons(res.suggestions || []);
-    setLoading(false);
+  const res = await askAI(prompt);
+
+  setAnswer(res.answer);
+  setSuggestedButtons(res.suggestions || []);
+  setLoading(false);
   }
+
+  {selectedQuestion && !loading && (
+  <div
+    style={{
+      marginTop: "16px",
+      padding: "10px 16px",
+      backgroundColor: "#f0f0f0",
+      borderRadius: "8px",
+      fontWeight: "bold",
+    }}
+  >
+    You asked: {selectedQuestion}
+  </div>
+  )}
 
   return (
     <div
