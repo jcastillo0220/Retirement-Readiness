@@ -16,7 +16,7 @@ export default function AIChat() {
       typeof question === "string"
         ? question
         : "can you explain what is Roth IRA." +
-          "Do not include an example. Make it as short as possible and use simple language.";
+          "Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira";
 
     const res = await askAI(prompt);
 
