@@ -25,14 +25,9 @@ async def generate(req: Request):
     data = await req.json()
     user_question = data["question"]
 
-    prompt = f"""
-    {user_question}
-    Make it as short as possible and use simple language.
-    """
-
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt
+        contents=user_question
     )
 
     return {"answer": response.text}
