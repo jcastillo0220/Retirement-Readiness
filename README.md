@@ -11,8 +11,8 @@ Our venture helps prepare individuals who are on a path to retirement and want t
 
 ---
 ## Link to Latest Docs
-[**PRD**]<br>
-[**Spike Plan**]<br>
+[**PRD**](https://github.com/jcastillo0220/Retirement-Readiness/blob/main/docs/PRD.pdf)<br>
+[**Spike Plan**](https://github.com/jcastillo0220/Retirement-Readiness/blob/main/docs/Spike%20Plan.pdf)<br>
 [**Pitch Deck**](https://github.com/jcastillo0220/Retirement-Readiness/blob/bbb02bedf890d70adcc42897e60de980f2cbb1ea/docs/Pitch%20Deck.pdf)<br>
 
 ## 🛠️ How to Run the Project in VS Code 
@@ -20,47 +20,62 @@ Our venture helps prepare individuals who are on a path to retirement and want t
 1. Navigate to the backend folder:
    ```bash
    cd backend
+   ```
 2. Check if you have Python installed. If you do, skip to step 4.
    ```bash
    py --version
+   ```
 3. Install Python from its offical [website](https://www.python.org/downloads/)
    -  Once it finishes installed, restart VS Code and redo step 2.
 4. Check if you have pip installed. If you do, skip to step 6.
    ```bash
    py -m pip --version
+   ```
 5. Install pip in your terminal. Once installed, restart VS Code and redo step 4.
    ```bash
    py -m ensurepip --upgrade
+   ```
 6. Check if you have uvicorn installed. If you do, skip to step 8.
    ```bash
    py -m uvicorn --version
+   ```
 7. Install uvicorn in your terminal. Once installed, restart VS Code and redo step 6.
    ```bash
    py -m pip install uvicorn
+   ```
 8. Install fastapi module
    ```bash
    py -m pip install fastapi
+   ```
 9. Install google-genai module
    ```bash
    py -m pip install google-genai
+   ```
 10. Check if the backend is running
    ```bash
-   unvicorn endpoint:app --reload
+   py -m unvicorn endpoint:app --reload
+   ```
 
 ### Frontend
-1. Navigate to frontend folder
+1. Navigate to frontend folder on a different terminal - **Still keep the older terminal**
    ```bash
    cd frontend
+   ```
 2. Check if you have Node.js installed, if not, install from offical [website](https://nodejs.org/en/download) and restart VS Code
    ```bash
    node --version
+   ```
 3. Install npm in the frontend folder
    ```bash
    npm install
+   ```
 4. Now install vite and restart VS Code after installation.
    ```bash
    npm install -g vite
+   ```
 5. Now Run:
    ```bash
    npm run dev
+   ```
+6. Navigate to the local host link in the terminal
 
