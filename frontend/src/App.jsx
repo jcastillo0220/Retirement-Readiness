@@ -2,6 +2,8 @@ import { useState } from "react";
 import { askAI } from "./api";
 import { bubbleStyle, buttonStyle } from "./styles";
 
+import ReactMarkdown from "react-markdown";
+
 export default function AIChat() {
   const [answer, setAnswer] = useState("");
   const [suggestedButtons, setSuggestedButtons] = useState([]);
@@ -13,7 +15,7 @@ export default function AIChat() {
     const prompt =
       typeof question === "string"
         ? question
-        : "can you explain what Roth IRA as simple and formally as you can." +
+        : "can you explain what is Roth IRA." +
           "Do not include an example. Make it as short as possible and use simple language.";
 
     const res = await askAI(prompt);
@@ -58,7 +60,11 @@ export default function AIChat() {
         </div>
       )}
 
-      {!loading && <p style={bubbleStyle}>{answer}</p>}
+      {!loading && (
+        <div style={bubbleStyle}>
+          <ReactMarkdown>{answer}</ReactMarkdown>
+        </div>
+      )}
 
       {!loading &&
         suggestedButtons.map((item, index) => (

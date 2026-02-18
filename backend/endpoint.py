@@ -29,7 +29,7 @@ async def generate(req: Request):
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=user_question
+        contents=f"Respond in Markdown format:\n\n{user_question}"
     )
 
     answer = response.text
