@@ -50,7 +50,7 @@ Our venture helps prepare individuals who are on a path to retirement and want t
 
 
 ### Frontend
-1. Navigate to frontend folder
+1. Navigate to frontend folder on a different terminal - **Still keep the older terminal**
    ```bash
    cd frontend
 2. Check if you have Node.js installed, if not, install from offical [website](https://nodejs.org/en/download) and restart VS Code
