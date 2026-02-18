@@ -1,5 +1,9 @@
 from fastapi import FastAPI, Request
 from google import genai
+from fastapi.middleware.cors import CORSMiddleware
+
+# imports suggested buttons generator function.
+from generator import generate_suggestions
 
 # uvicorn endpoint:app --reload
 # ^This will run the program in development mode. Open http://localhost:8000/docs to view the API documentation and test the endpoint.
@@ -9,8 +13,6 @@ API_KEY = "AIzaSyDLXw7TU7ntqZ52NhZ-bNO72qThVNs9I6I"
 client = genai.Client(api_key=API_KEY)
 
 app = FastAPI()
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,4 +32,8 @@ async def generate(req: Request):
         contents=user_question
     )
 
-    return {"answer": response.text}
+    answer = response.text
+    suggestions = generate_suggestions(answer)
+
+    return {"answer": answer, 
+            "suggestions": suggestions}
