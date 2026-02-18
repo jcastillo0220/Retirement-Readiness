@@ -32,14 +32,19 @@ export default function AIChat() {
   {selectedQuestion && !loading && (
   <div
     style={{
-      marginTop: "16px",
+      maxWidth: "70%",
+      alignSelf: "flex-end",
+      backgroundColor: "#d1e7ff",
       padding: "10px 16px",
-      backgroundColor: "#f0f0f0",
-      borderRadius: "8px",
-      fontWeight: "bold",
+      borderRadius: "16px",
+      marginTop: "16px",
+      marginBottom: "8px",
+      color: "#003366",
+      fontWeight: "500",
+      boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
     }}
   >
-    You asked: {selectedQuestion}
+    {selectedQuestion}
   </div>
   )}
 
