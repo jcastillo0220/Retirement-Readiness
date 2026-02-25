@@ -5,12 +5,8 @@ from typing import Optional
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
-from dotenv import load_dotenv
 
 from generator import generate_suggestions  # topic-scoped generator
-
-# Load .env for local development (safe to ignore in production)
-load_dotenv()
 
 API_KEY = "AIzaSyDLXw7TU7ntqZ52NhZ-bNO72qThVNs9I6I"
 client = genai.Client(api_key=API_KEY)
