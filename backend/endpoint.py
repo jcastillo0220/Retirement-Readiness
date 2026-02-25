@@ -8,7 +8,7 @@ from google import genai
 
 from generator import generate_suggestions  # topic-scoped generator
 
-API_KEY = "AIzaSyDLXw7TU7ntqZ52NhZ-bNO72qThVNs9I6I"
+API_KEY = "AIzaSyBxl3MOVTweauPzeeB355Bq0tV2gjUGGnE"
 client = genai.Client(api_key=API_KEY)
 
 app = FastAPI()
