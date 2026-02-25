@@ -1,15 +1,21 @@
-from fastapi import FastAPI, Request
-from google import genai
-from fastapi.middleware.cors import CORSMiddleware
+import os
+import time
 import json
+from typing import Optional
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from google import genai
+from dotenv import load_dotenv
 
-from generator import generate_suggestions
+from generator import generate_suggestions  # topic-scoped generator
+
+# Load .env for local development (safe to ignore in production)
+load_dotenv()
 
 API_KEY = "AIzaSyDLXw7TU7ntqZ52NhZ-bNO72qThVNs9I6I"
 client = genai.Client(api_key=API_KEY)
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,6 +23,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------
+# Simple in-memory TTL cache
+# ---------------------------
+CACHE_TTL = 60 * 60  # 1 hour
+CACHE_MAX_ITEMS = 1000
+_cache = {}
+
+def _make_cache_key(prompt: str, topic_key: Optional[str]):
+    key = (prompt or "").strip().lower()
+    if topic_key:
+        key = f"{topic_key}||{key}"
+    return key
+
+def _cache_get(key: str):
+    entry = _cache.get(key)
+    if not entry:
+        return None
+    if time.time() - entry["ts"] > CACHE_TTL:
+        del _cache[key]
+        return None
+    return entry
+
+def _cache_set(key: str, value: dict):
+    if len(_cache) >= CACHE_MAX_ITEMS:
+        oldest_key = min(_cache.items(), key=lambda kv: kv[1]["ts"])[0]
+        del _cache[oldest_key]
+    value["ts"] = time.time()
+    _cache[key] = value
 
 # ---------------------------
 # AI helper functions
@@ -28,7 +63,6 @@ def ask_ai(prompt: str):
         contents=prompt
     )
     return response.text.strip()
-
 
 def repair_answer(original_answer: str, original_question: str):
     repair_prompt = f"""
@@ -53,17 +87,28 @@ Now produce a corrected answer in Markdown.
 """
     return ask_ai(repair_prompt)
 
-
 # ---------------------------
-# Main API endpoint (single-call validation)
+# Main API endpoint (single-call validation + caching + topic)
 # ---------------------------
 
 @app.post("/api/ai/generate")
 async def generate(req: Request):
     data = await req.json()
-    user_question = data["question"]
+    user_question = data.get("question", "")
+    topic_key = data.get("topicKey")  # optional topic key from frontend
 
-    # Single prompt: ask for answer, then a JSON validation token on a new line
+    cache_key = _make_cache_key(user_question, topic_key)
+    cached = _cache_get(cache_key)
+    if cached:
+        return {
+            "answer": cached["answer"],
+            "validated": cached["validated"],
+            "confidence": cached.get("confidence", 1),
+            "suggestions": cached.get("suggestions", []),
+            "original_answer": cached.get("original_answer"),
+            "cached": True
+        }
+
     single_prompt = f"""
 Answer the question below in Markdown. Keep the explanation short and use simple language.
 Do not include examples.
@@ -81,38 +126,30 @@ After the Markdown answer, on a new line output a JSON object EXACTLY in this fo
 
     raw = ask_ai(single_prompt)
 
-    # Try to split the model output into answer_text and trailing JSON metadata
     answer_text = raw
     meta = {"validation": "uncertain", "confidence": 1}
     parsed_json = None
 
-    # Attempt to extract the last non-empty line as JSON
     try:
         parts = raw.strip().rsplit("\n", 1)
         if len(parts) == 2:
             possible_json = parts[1].strip()
             parsed_json = json.loads(possible_json)
-            # If parsed, answer_text is everything before that last line
             answer_text = parts[0].strip()
-            # Normalize meta
             if isinstance(parsed_json, dict):
                 meta["validation"] = parsed_json.get("validation", "uncertain")
                 meta["confidence"] = int(parsed_json.get("confidence", 1))
     except Exception:
-        # If parsing fails, keep answer_text as full raw response and meta as uncertain
         parsed_json = None
         meta = {"validation": "uncertain", "confidence": 1}
 
-    # If the model returned the JSON inline (no newline), try to parse trailing JSON substring
     if parsed_json is None:
-        # attempt to find a JSON object at the end of the string
         try:
             last_brace = raw.rfind("}")
             first_brace = raw.rfind("{", 0, last_brace + 1)
             if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
                 possible_json = raw[first_brace:last_brace + 1]
                 parsed_json = json.loads(possible_json)
-                # remove the JSON substring from the answer_text
                 answer_text = (raw[:first_brace] + raw[last_brace + 1:]).strip()
                 if isinstance(parsed_json, dict):
                     meta["validation"] = parsed_json.get("validation", "uncertain")
@@ -121,7 +158,6 @@ After the Markdown answer, on a new line output a JSON object EXACTLY in this fo
             parsed_json = None
             meta = {"validation": "uncertain", "confidence": 1}
 
-    # If validation is invalid or uncertain, call repair once (second model call)
     validated = True
     original_answer = None
     if meta["validation"] in ["invalid", "uncertain"]:
@@ -133,8 +169,16 @@ After the Markdown answer, on a new line output a JSON object EXACTLY in this fo
         final_answer = answer_text
         validated = True
 
-    # Generate suggestions based on the final answer
-    suggestions = generate_suggestions(final_answer)
+    suggestions = generate_suggestions(final_answer, topic_key=topic_key)
+
+    cache_value = {
+        "answer": final_answer,
+        "validated": validated,
+        "confidence": meta.get("confidence", 1),
+        "suggestions": suggestions,
+        "original_answer": original_answer
+    }
+    _cache_set(cache_key, cache_value)
 
     return {
         "answer": final_answer,
@@ -142,4 +186,5 @@ After the Markdown answer, on a new line output a JSON object EXACTLY in this fo
         "confidence": meta.get("confidence", 1),
         "suggestions": suggestions,
         "original_answer": original_answer,
+        "cached": False
     }
