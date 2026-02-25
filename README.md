@@ -53,7 +53,7 @@ Our venture helps prepare individuals who are on a path to retirement and want t
    ```
 10. Check if the backend is running
    ```bash
-   py -m unvicorn endpoint:app --reload
+   py -m uvicorn endpoint:app --reload
    ```
 
 ### Frontend
