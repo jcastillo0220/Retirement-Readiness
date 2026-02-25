@@ -5,35 +5,35 @@ generator_map = {
         {"label": "How do taxes work in a Roth IRA?", 
          "prompt": "How do taxes work in a Roth IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira"},
         {"label": "What are qualified withdrawals?", 
-         "prompt": "What are qualified withdrawals in a Roth IRA?"},
+         "prompt": "What are qualified withdrawals in a Roth IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira"},
         {"label": "What are contribution limits?", 
-         "prompt": "What are the Roth IRA contribution limits?"},
+         "prompt": "What are the Roth IRA contribution limits?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira"},
         {"label": "Roth vs Traditional IRA", 
-         "prompt": "What is the difference between a Roth IRA and a Traditional IRA?"}
+         "prompt": "What is the difference between a Roth IRA and a Traditional IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira"}
     ],
     "401k": [
         {"label": "How does a 401(k) work?", 
-         "prompt": "How does a 401(k) work?"},
+         "prompt": "How does a 401(k) work?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-401k"},
         {"label": "What are 401(k) tax rules?", 
-         "prompt": "How are 401(k) contributions and withdrawals taxed?"}
+         "prompt": "How are 401(k) contributions and withdrawals taxed?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-401k"}
     ],
     "traditional_ira": [
         {"label": "How are Traditional IRAs taxed?", 
-         "prompt": "How are Traditional IRAs taxed?"},
+         "prompt": "How are Traditional IRAs taxed?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-traditional-ira"},
         {"label": "Traditional IRA contribution rules", 
-         "prompt": "What are the contribution rules for a Traditional IRA?"}
+         "prompt": "What are the contribution rules for a Traditional IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-traditional-ira"}
     ],
     "rollover_ira": [
         {"label": "What is a Rollover IRA?", 
-         "prompt": "What is a Rollover IRA?"},
+         "prompt": "What is a Rollover IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-rollover-ira"},
         {"label": "When to use a Rollover IRA", 
-         "prompt": "When should someone use a Rollover IRA?"}
+         "prompt": "When should someone use a Rollover IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-rollover-ira"}
     ],
     "roth_401k": [
         {"label": "What is a Roth 401(k)?", 
-         "prompt": "What is a Roth 401(k)?"},
+         "prompt": "What is a Roth 401(k)?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k"},
         {"label": "Roth 401(k) vs Roth IRA", 
-         "prompt": "How is a Roth 401(k) different from a Roth IRA?"}
+         "prompt": "How is a Roth 401(k) different from a Roth IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k"}
     ],
 }
 

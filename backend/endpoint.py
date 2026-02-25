@@ -70,7 +70,7 @@ Rules:
 - Use simple language
 - Keep it short
 - No examples
-- Base your explanation ONLY on trusted sources like Fidelity or IRS.gov when applicable
+- Base your explanation ONLY on trusted sources like https://www.fidelity.com/learning-center/smart-money/retirement-accounts or https://www.irs.gov/retirement-plans/plan-sponsor/types-of-retirement-plans when applicable
 - Stay strictly on topic
 
 Original question:
