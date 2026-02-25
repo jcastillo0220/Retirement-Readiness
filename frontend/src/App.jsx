@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { askAI } from "./api";
-import { bubbleStyle, buttonStyle } from "./styles";
+import { bubbleStyle, buttonStyle, suggestionStyle, selectedQuestionStyle, errorStyle } from "./styles";
 import ReactMarkdown from "react-markdown";
 
 const TOPIC_BUTTONS = [
@@ -125,13 +125,7 @@ export default function AIChat() {
                 key={index}
                 onClick={() => handleAsk(item.prompt, item.label, null)}
                 style={{
-                  padding: "8px 14px",
-                  backgroundColor: "#4a90e2",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  fontSize: "0.9rem",
-                  cursor: "pointer",
+                  ...suggestionStyle,
                 }}
               >
                 {item.label}
@@ -143,16 +137,7 @@ export default function AIChat() {
         {selectedQuestion && (
           <div
             style={{
-              maxWidth: "70%",
-              alignSelf: "flex-end",
-              backgroundColor: "#d1e7ff",
-              padding: "8px 14px",
-              borderRadius: 16,
-              marginTop: 8,
-              marginBottom: 6,
-              color: "#003366",
-              fontWeight: 500,
-              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              ...selectedQuestionStyle,
             }}
           >
             {selectedQuestion}
@@ -163,10 +148,7 @@ export default function AIChat() {
         {error && (
           <div
             style={{
-              backgroundColor: "#ffe6e6",
-              color: "#8b0000",
-              padding: "8px 12px",
-              borderRadius: 8,
+              ...errorStyle,
             }}
           >
             {error}
