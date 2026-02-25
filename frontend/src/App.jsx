@@ -159,6 +159,7 @@ export default function AIChat() {
               style={{
                 ...bubbleStyle,
                 maxHeight: "250px",          // makes it scrollable
+                maxWidth: "450px",             // controls bubble width
                 overflowY: "auto",           // enables scrolling
                 backgroundColor: "#fff7d6",  
                 borderLeft: "4px solid #e0b400",
@@ -166,7 +167,7 @@ export default function AIChat() {
                 marginLeft: "auto"           // ensures right alignment
               }}
             >
-              <strong>AI‑Optimized Label Prompt:</strong>
+              <strong>AI-Unoptimized Prompt:</strong>
               <div style={{ marginTop: 6 }}>
                 <ReactMarkdown>{labelPrompt}</ReactMarkdown>
               </div>
