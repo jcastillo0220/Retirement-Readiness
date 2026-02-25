@@ -19,6 +19,7 @@ export default function AIChat() {
   const [validated, setValidated] = useState(true);
   const [originalAnswer, setOriginalAnswer] = useState(null);
   const [error, setError] = useState(null);
+  const [labelPrompt, setLabelPrompt] = useState(null);
 
   // chat history: newest last (optional)
   const [history, setHistory] = useState([]);
@@ -41,7 +42,7 @@ export default function AIChat() {
     try {
       // askAI should call your backend /api/ai/generate and return JSON:
       // { answer: string, suggestions: [], validated: boolean, original_answer?: string, cached?: bool }
-      const res = await askAI({ question: finalPrompt, topicKey });
+      const res = await askAI({ question: finalPrompt, topicKey, label: label || null });
 
       // If a newer request started after this one, ignore this response
       if (myRequestId !== requestIdRef.current) return;
@@ -50,12 +51,14 @@ export default function AIChat() {
       const suggestions = res?.suggestions ?? [];
       const isValid = res?.validated !== undefined ? res.validated : true;
       const orig = res?.original_answer ?? null;
+      const labelPromptFromBackend = res?.label_prompt || null;
 
-      // update UI
+      // Update UI
       setAnswer(finalAnswer);
       setSuggestedButtons(suggestions);
       setValidated(isValid);
       setOriginalAnswer(orig);
+      setLabelPrompt(labelPromptFromBackend);
 
       // append to history
       setHistory((h) => [
@@ -141,6 +144,33 @@ export default function AIChat() {
             }}
           >
             {selectedQuestion}
+          </div>
+        )}
+        {labelPrompt && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end", 
+              width: "100%",
+              marginTop: 8
+            }}
+          >
+            <div
+              style={{
+                ...bubbleStyle,
+                maxHeight: "250px",          // makes it scrollable
+                overflowY: "auto",           // enables scrolling
+                backgroundColor: "#fff7d6",  
+                borderLeft: "4px solid #e0b400",
+                width: "60%",                // controls bubble width
+                marginLeft: "auto"           // ensures right alignment
+              }}
+            >
+              <strong>AI‑Optimized Label Prompt:</strong>
+              <div style={{ marginTop: 6 }}>
+                <ReactMarkdown>{labelPrompt}</ReactMarkdown>
+              </div>
+            </div>
           </div>
         )}
 

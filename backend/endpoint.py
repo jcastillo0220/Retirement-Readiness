@@ -92,6 +92,7 @@ async def generate(req: Request):
     data = await req.json()
     user_question = data.get("question", "")
     topic_key = data.get("topicKey")  # optional topic key from frontend
+    label = data.get("label") # Human prompt
 
     cache_key = _make_cache_key(user_question, topic_key)
     cached = _cache_get(cache_key)
@@ -106,21 +107,22 @@ async def generate(req: Request):
         }
 
     single_prompt = f"""
-Answer the question below in Markdown. Keep the explanation short and use simple language.
-Do not include examples.
+        Answer the question below in Markdown. Keep the explanation short and use simple language.
+        Do not include examples.
 
-Question:
-\"\"\"{user_question}\"\"\"
+        Question:
+        \"\"\"{user_question}\"\"\"
 
-After the Markdown answer, on a new line output a JSON object EXACTLY in this format:
-{{"validation":"valid"|"invalid"|"uncertain","confidence":1}}
+        After the Markdown answer, on a new line output a JSON object EXACTLY in this format:
+        {{"validation":"valid"|"invalid"|"uncertain","confidence":1}}
 
-- validation must be one of: valid, invalid, uncertain
-- confidence is an integer 1-5 (5 = highest confidence)
-- Do not output any other JSON or text on the same line as the JSON object.
-"""
+        - validation must be one of: valid, invalid, uncertain
+        - confidence is an integer 1-5 (5 = highest confidence)
+        - Do not output any other JSON or text on the same line as the JSON object.
+        """
 
     raw = ask_ai(single_prompt)
+    label_prompt = ask_ai(label)
 
     answer_text = raw
     meta = {"validation": "uncertain", "confidence": 1}
@@ -182,5 +184,7 @@ After the Markdown answer, on a new line output a JSON object EXACTLY in this fo
         "confidence": meta.get("confidence", 1),
         "suggestions": suggestions,
         "original_answer": original_answer,
-        "cached": False
+        "cached": False,
+        "label_used": label,
+        "label_prompt": label_prompt
     }
