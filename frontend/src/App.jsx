@@ -1,6 +1,23 @@
 import { useState, useRef } from "react";
 import { askAI } from "./api";
-import { bubbleStyle, buttonStyle, suggestionStyle, selectedQuestionStyle, errorStyle } from "./styles";
+import {
+  containerStyle,
+  shellStyle,
+  headerStyle,
+  brandStyle,
+  titleStyle,
+  subtitleStyle,
+  badgeStyle,
+  buttonRowStyle,
+  footerNoteStyle,
+  buttonStyle,
+  suggestionStyle,
+  selectedQuestionStyle,
+  bubbleStyle,
+  errorStyle,
+  validatedPill,
+  correctedPill,
+} from "./styles";
 import ReactMarkdown from "react-markdown";
 
 const TOPIC_BUTTONS = [
@@ -21,16 +38,12 @@ export default function AIChat() {
   const [error, setError] = useState(null);
   const [labelPrompt, setLabelPrompt] = useState(null);
 
-  // chat history: newest last (optional)
   const [history, setHistory] = useState([]);
-  // request id guard to avoid out-of-order updates
   const requestIdRef = useRef(0);
 
-  // handleAsk expects a short prompt, a human label, and a topic key
   async function handleAsk(prompt, label, topicKey) {
     const myRequestId = ++requestIdRef.current;
 
-    // Immediately show which question is active
     setSelectedQuestion(label || "What is a Roth IRA?");
     setValidated(true);
     setOriginalAnswer(null);
@@ -40,11 +53,8 @@ export default function AIChat() {
     const finalPrompt = typeof prompt === "string" ? prompt : "What is a Roth IRA?";
 
     try {
-      // askAI should call your backend /api/ai/generate and return JSON:
-      // { answer: string, suggestions: [], validated: boolean, original_answer?: string, cached?: bool }
       const res = await askAI({ question: finalPrompt, topicKey, label: label || null });
 
-      // If a newer request started after this one, ignore this response
       if (myRequestId !== requestIdRef.current) return;
 
       const finalAnswer = res?.answer ?? "";
@@ -53,14 +63,12 @@ export default function AIChat() {
       const orig = res?.original_answer ?? null;
       const labelPromptFromBackend = res?.label_prompt || null;
 
-      // Update UI
       setAnswer(finalAnswer);
       setSuggestedButtons(suggestions);
       setValidated(isValid);
       setOriginalAnswer(orig);
       setLabelPrompt(labelPromptFromBackend);
 
-      // append to history
       setHistory((h) => [
         ...h,
         {
@@ -85,19 +93,21 @@ export default function AIChat() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: "100%",
-        padding: 20,
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 900, display: "flex", flexDirection: "column", gap: 12 }}>
-        {/* Top row of topic buttons */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    <div style={containerStyle}>
+      <div style={shellStyle}>
+        {/* Header */}
+        <div style={headerStyle}>
+          <div style={brandStyle}>
+            <div style={titleStyle}>Retirement Readiness</div>
+            <div style={subtitleStyle}>
+              Fintech-style AI assistant for retirement basics (educational only)
+            </div>
+          </div>
+          <div style={badgeStyle}>{loading ? "Working…" : "Demo • Connected"}</div>
+        </div>
+
+        {/* Topic Buttons */}
+        <div style={buttonRowStyle}>
           {TOPIC_BUTTONS.map((btn) => {
             const isActive = loading && selectedQuestion === btn.label;
             return (
@@ -106,118 +116,87 @@ export default function AIChat() {
                 onClick={() => handleAsk(btn.prompt, btn.label, btn.key)}
                 style={{
                   ...buttonStyle,
-                  padding: "8px 14px",
-                  opacity: loading && !isActive ? 0.6 : 1,
+                  opacity: loading && !isActive ? 0.65 : 1,
                   cursor: loading ? "not-allowed" : "pointer",
                 }}
                 disabled={loading}
                 aria-pressed={selectedQuestion === btn.label}
                 aria-label={btn.label}
+                onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
+                onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
               >
-                {isActive ? "Thinking..." : btn.label}
+                {isActive ? "Thinking…" : btn.label}
               </button>
             );
           })}
         </div>
 
-        {/* Suggested follow-up buttons (topic-scoped) */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+        {/* Suggested Follow-ups */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "0 6px" }}>
           {!loading &&
             suggestedButtons.map((item, index) => (
               <button
                 key={index}
                 onClick={() => handleAsk(item.prompt, item.label, null)}
-                style={{
-                  ...suggestionStyle,
-                }}
+                style={suggestionStyle}
               >
                 {item.label}
               </button>
             ))}
         </div>
 
-        {/* Selected question bubble (shows the label the user asked) */}
-        {selectedQuestion && (
-          <div
-            style={{
-              ...selectedQuestionStyle,
-            }}
-          >
-            {selectedQuestion}
-          </div>
-        )}
+        {/* Selected Question */}
+        {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
+
+        {/* Label Prompt Bubble */}
         {labelPrompt && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end", 
-              width: "100%",
-              marginTop: 8
-            }}
-          >
+          <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", marginTop: 8 }}>
             <div
               style={{
                 ...bubbleStyle,
-                maxHeight: "250px",          // makes it scrollable
-                maxWidth: "450px",             // controls bubble width
-                overflowY: "auto",           // enables scrolling
-                backgroundColor: "#fff7d6",  
-                borderLeft: "4px solid #e0b400",
-                width: "60%",                // controls bubble width
-                marginLeft: "auto"           // ensures right alignment
+                maxHeight: 260,
+                maxWidth: 520,
+                overflowY: "auto",
+                width: "66%",
+                marginLeft: "auto",
+                background: "rgba(246,196,69,0.10)",
+                border: "1px solid rgba(246,196,69,0.28)",
+                borderLeft: "4px solid rgba(246,196,69,0.85)",
               }}
             >
-              <strong>AI-Unoptimized Prompt:</strong>
-              <div style={{ marginTop: 6 }}>
-                <ReactMarkdown>{labelPrompt}</ReactMarkdown>
-              </div>
+              <strong style={{ display: "block", marginBottom: 6 }}>AI-Unoptimized Prompt</strong>
+              <ReactMarkdown>{labelPrompt}</ReactMarkdown>
             </div>
           </div>
         )}
 
         {/* Error */}
-        {error && (
-          <div
-            style={{
-              ...errorStyle,
-            }}
-          >
-            {error}
-          </div>
-        )}
+        {error && <div style={errorStyle}>{error}</div>}
 
-        {/* Loading indicator */}
+        {/* Loading */}
         {loading && (
-          <div
-            style={{
-              backgroundColor: "#e8f0fe",
-              padding: "10px 16px",
-              borderRadius: 12,
-              marginTop: 6,
-              fontStyle: "italic",
-              opacity: 0.95,
-            }}
-          >
+          <div style={{ ...bubbleStyle, opacity: 0.95, fontStyle: "italic" }}>
             AI is thinking…
           </div>
         )}
 
-        {/* Current AI answer bubble */}
+        {/* Current Answer */}
         {!loading && answer && (
-          <div style={{ ...bubbleStyle, marginTop: 8 }}>
+          <div style={bubbleStyle}>
             <ReactMarkdown>{answer}</ReactMarkdown>
 
-            <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
               {validated ? (
-                <span style={{ color: "#0b6623", fontWeight: 600 }}>Validated</span>
+                <span style={validatedPill}>Validated</span>
               ) : (
-                <span style={{ color: "#a63a3a", fontWeight: 600 }}>Corrected by AI</span>
+                <span style={correctedPill}>Corrected</span>
               )}
 
               {!validated && originalAnswer && (
-                <details style={{ marginLeft: 8 }}>
-                  <summary style={{ cursor: "pointer", color: "#555" }}>View original answer</summary>
-                  <div style={{ marginTop: 6 }}>
+                <details style={{ marginLeft: 4 }}>
+                  <summary style={{ cursor: "pointer", opacity: 0.85 }}>View original answer</summary>
+                  <div style={{ marginTop: 8 }}>
                     <ReactMarkdown>{originalAnswer}</ReactMarkdown>
                   </div>
                 </details>
@@ -226,48 +205,36 @@ export default function AIChat() {
           </div>
         )}
 
-        {/* Chat history (previous Q&A) */}
+        {/* History */}
         {history.length > 0 && (
-          <div style={{ marginTop: 12, width: "100%" }}>
+          <div style={{ marginTop: 6, width: "100%" }}>
             {history.map((item) => (
-              <div key={item.id} style={{ marginBottom: 12 }}>
-                <div
-                  style={{
-                    alignSelf: "flex-end",
-                    backgroundColor: "#d1e7ff",
-                    padding: "6px 12px",
-                    borderRadius: 14,
-                    maxWidth: "70%",
-                    marginLeft: "auto",
-                    color: "#003366",
-                    fontWeight: 500,
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  {item.label}
-                </div>
+              <div key={item.id} style={{ marginBottom: 14 }}>
+                <div style={{ ...selectedQuestionStyle, marginTop: 6 }}>{item.label}</div>
 
-                <div style={{ ...bubbleStyle, marginTop: 8 }}>
+                <div style={{ ...bubbleStyle, marginTop: 10 }}>
                   <ReactMarkdown>{item.answer}</ReactMarkdown>
 
-                  <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
+                  <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
                     {item.validated ? (
-                      <span style={{ color: "#0b6623", fontWeight: 600 }}>Validated</span>
+                      <span style={validatedPill}>Validated</span>
                     ) : (
-                      <span style={{ color: "#a63a3a", fontWeight: 600 }}>Corrected by AI</span>
+                      <span style={correctedPill}>Corrected</span>
                     )}
 
                     {!item.validated && item.originalAnswer && (
-                      <details style={{ marginLeft: 8 }}>
-                        <summary style={{ cursor: "pointer", color: "#555" }}>View original answer</summary>
-                        <div style={{ marginTop: 6 }}>
+                      <details style={{ marginLeft: 4 }}>
+                        <summary style={{ cursor: "pointer", opacity: 0.85 }}>View original answer</summary>
+                        <div style={{ marginTop: 8 }}>
                           <ReactMarkdown>{item.originalAnswer}</ReactMarkdown>
                         </div>
                       </details>
                     )}
 
                     {item.cached && (
-                      <span style={{ marginLeft: "auto", color: "#666", fontSize: 12 }}>cached</span>
+                      <span style={{ marginLeft: "auto", opacity: 0.65, fontSize: 12 }}>
+                        cached
+                      </span>
                     )}
                   </div>
                 </div>
@@ -275,6 +242,10 @@ export default function AIChat() {
             ))}
           </div>
         )}
+
+        <div style={footerNoteStyle}>
+          Tip: Use the top buttons for a clean 2–3 minute demo. Add “Sources” under answers for extra credibility.
+        </div>
       </div>
     </div>
   );
