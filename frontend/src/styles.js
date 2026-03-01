@@ -1,50 +1,168 @@
-export const bubbleStyle = {
-  backgroundColor: "#e8f0fe",
-  padding: "12px 16px",
-  borderRadius: "12px",
-  maxWidth: "300px",
-  fontSize: "16px",
-  lineHeight: "1.4",
-  marginTop: "12px",
+// Fintech-grade UI tokens (dark, clean, high-contrast)
+
+const colors = {
+  bg: "#070A12",
+  card: "rgba(255,255,255,0.06)",
+  card2: "rgba(255,255,255,0.08)",
+  border: "rgba(255,255,255,0.12)",
+  border2: "rgba(255,255,255,0.18)",
+  text: "#EAF0FF",
+  subtext: "rgba(234,240,255,0.72)",
+  muted: "rgba(234,240,255,0.55)",
+  accent: "#5B8CFF",
+  accent2: "#7C5CFF",
+  green: "#2EE59D",
+  red: "#FF6B6B",
+  amber: "#F6C445",
+  chip: "rgba(91,140,255,0.12)",
+  shadow: "0 18px 60px rgba(0,0,0,0.55)",
+};
+
+export const containerStyle = {
+  minHeight: "100vh",
+  width: "100%",
+  background:
+    "radial-gradient(1200px 600px at 10% 0%, rgba(91,140,255,0.22), transparent 60%)," +
+    "radial-gradient(900px 500px at 90% 10%, rgba(124,92,255,0.20), transparent 55%)," +
+    "linear-gradient(180deg, #050710 0%, #070A12 40%, #070A12 100%)",
+  color: colors.text,
+  fontFamily:
+    'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial',
+  display: "flex",
+  justifyContent: "center",
+  padding: "28px 16px",
+  boxSizing: "border-box",
+};
+
+export const shellStyle = {
+  width: "100%",
+  maxWidth: 980,
+  display: "flex",
+  flexDirection: "column",
+  gap: 14,
+};
+
+export const headerStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "18px 18px",
+  borderRadius: 18,
+  background: colors.card,
+  border: `1px solid ${colors.border}`,
+  boxShadow: colors.shadow,
+  backdropFilter: "blur(10px)",
+};
+
+export const brandStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+};
+
+export const titleStyle = {
+  fontSize: 18,
+  fontWeight: 800,
+  letterSpacing: 0.2,
+};
+
+export const subtitleStyle = {
+  fontSize: 13,
+  color: colors.subtext,
+};
+
+export const badgeStyle = {
+  fontSize: 12,
+  padding: "6px 10px",
+  borderRadius: 999,
+  border: `1px solid ${colors.border2}`,
+  background: "rgba(255,255,255,0.04)",
+  color: colors.subtext,
+};
+
+export const buttonRowStyle = {
+  display: "flex",
+  gap: 10,
+  flexWrap: "wrap",
+  padding: "12px 6px 2px",
 };
 
 export const buttonStyle = {
-  padding: "10px 18px",
-  backgroundColor: "#4a90e2",
-  color: "white",
-  border: "none",
-  borderRadius: "8px",
-  fontSize: "18px",
-  cursor: "pointer",
-  marginBottom: "12px",
+  border: `1px solid ${colors.border}`,
+  background: "rgba(255,255,255,0.04)",
+  color: colors.text,
+  borderRadius: 999,
+  padding: "10px 14px",
+  fontSize: 13,
+  fontWeight: 650,
+  transition: "transform 120ms ease, background 120ms ease, border 120ms ease",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
 };
 
 export const suggestionStyle = {
-  padding: "8px 14px",
-  backgroundColor: "#3a6fab",
-  color: "white",
-  border: "none",
-  borderRadius: 8,
-  fontSize: "16px",
-  cursor: "pointer",
+  ...buttonStyle,
+  background: colors.chip,
+  border: `1px solid rgba(91,140,255,0.22)`,
+  color: colors.text,
 };
 
 export const selectedQuestionStyle = {
-  maxWidth: "70%",
   alignSelf: "flex-end",
-  backgroundColor: "#d1e7ff",
-  padding: "8px 14px",
+  maxWidth: "76%",
   borderRadius: 16,
-  marginTop: 8,
-  marginBottom: 6,
-  color: "#003366",
-  fontSize: "16px",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-};     
+  padding: "10px 14px",
+  background: "rgba(91,140,255,0.16)",
+  border: "1px solid rgba(91,140,255,0.30)",
+  color: colors.text,
+  fontWeight: 650,
+  boxShadow: "0 10px 30px rgba(0,0,0,0.30)",
+};
+
+export const bubbleStyle = {
+  width: "100%",
+  borderRadius: 18,
+  padding: "14px 16px",
+  background: colors.card2,
+  border: `1px solid ${colors.border}`,
+  boxShadow: "0 16px 50px rgba(0,0,0,0.35)",
+  lineHeight: 1.5,
+};
 
 export const errorStyle = {
-  backgroundColor: "#ffe6e6",
-  color: "#8b0000",
-  padding: "8px 12px",
-  borderRadius: 8,
+  width: "100%",
+  borderRadius: 14,
+  padding: "10px 12px",
+  background: "rgba(255,107,107,0.12)",
+  border: "1px solid rgba(255,107,107,0.26)",
+  color: "#FFD6D6",
+  fontWeight: 650,
+};
+
+export const statusPillBase = {
+  fontSize: 12,
+  fontWeight: 750,
+  padding: "6px 10px",
+  borderRadius: 999,
+  border: `1px solid ${colors.border}`,
+  background: "rgba(255,255,255,0.04)",
+};
+
+export const validatedPill = {
+  ...statusPillBase,
+  color: colors.green,
+  border: "1px solid rgba(46,229,157,0.30)",
+  background: "rgba(46,229,157,0.08)",
+};
+
+export const correctedPill = {
+  ...statusPillBase,
+  color: colors.amber,
+  border: "1px solid rgba(246,196,69,0.30)",
+  background: "rgba(246,196,69,0.10)",
+};
+
+export const footerNoteStyle = {
+  fontSize: 12,
+  color: colors.muted,
+  padding: "0 6px",
 };
