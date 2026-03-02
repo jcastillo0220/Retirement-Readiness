@@ -1,5 +1,3 @@
-# endpoint.py (FINAL - copy/paste entire file)
-
 import os
 import time
 import json
