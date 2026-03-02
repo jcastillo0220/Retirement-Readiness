@@ -22,7 +22,7 @@ if not API_KEY:
 
 # Pick a model that exists in the NEW API.
 # If this one fails, we’ll list models and choose yours.
-MODEL_NAME = (os.getenv("GEMINI_MODEL") or "gemini-2.0-flash").strip()
+MODEL_NAME = (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash").strip()
 
 client = genai.Client(api_key=API_KEY)
 

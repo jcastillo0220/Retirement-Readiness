@@ -149,28 +149,6 @@ export default function AIChat() {
         {/* Selected Question */}
         {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
 
-        {/* Label Prompt Bubble */}
-        {labelPrompt && (
-          <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", marginTop: 8 }}>
-            <div
-              style={{
-                ...bubbleStyle,
-                maxHeight: 260,
-                maxWidth: 520,
-                overflowY: "auto",
-                width: "66%",
-                marginLeft: "auto",
-                background: "rgba(246,196,69,0.10)",
-                border: "1px solid rgba(246,196,69,0.28)",
-                borderLeft: "4px solid rgba(246,196,69,0.85)",
-              }}
-            >
-              <strong style={{ display: "block", marginBottom: 6 }}>AI-Unoptimized Prompt</strong>
-              <ReactMarkdown>{labelPrompt}</ReactMarkdown>
-            </div>
-          </div>
-        )}
-
         {/* Error */}
         {error && <div style={errorStyle}>{error}</div>}
 
