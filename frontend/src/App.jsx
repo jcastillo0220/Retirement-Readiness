@@ -3,6 +3,7 @@ import ScenarioForm from "./components/scenarioForm";
 import TopicButtons from "./components/topicButtons";
 import AnswerBubble from "./components/answerBubble";
 import HistoryList from "./components/historyList";
+import logo from "./assets/logo.png";
 import {
   containerStyle,
   shellStyle,
@@ -49,12 +50,16 @@ const topic_buttons = [
 
         {/* Header */}
         <div style={headerStyle}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={logo} alt="Retirement Readiness Logo" style={{ width: 40, height: 40 }} />
+          
           <div style={brandStyle}>
             <div style={titleStyle}>Retirement Readiness</div>
             <div style={subtitleStyle}>
               Fintech-style AI assistant for retirement basics (educational only)
             </div>
           </div>
+        </div>
           <div style={badgeStyle}>{loading ? "Working…" : "Demo • Connected"}</div>
         </div>
 
