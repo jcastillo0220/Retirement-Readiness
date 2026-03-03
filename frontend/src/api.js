@@ -17,3 +17,14 @@ export async function askAI(payload) {
 
   return JSON.parse(text);
 }
+
+export async function runScenario(inputs) {
+  const res = await fetch("http://localhost:8000/api/scenario", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(inputs),
+  });
+
+  if (!res.ok) throw new Error("Scenario error");
+  return res.json();
+}
