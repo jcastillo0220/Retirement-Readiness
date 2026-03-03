@@ -51,11 +51,23 @@ Our venture helps prepare individuals who are on a path to retirement and want t
    ```bash
    py -m pip install python-dotenv
    ```
-10. Install google-genai module
+10. Install BeautifulSoup package
+   ```bash
+   py -m pip install beautifulsoup4
+   ```
+11. Install requests package
+   ```bash
+   py -m pip install requests
+   ```
+12. Install PyPDF2 reader
+   ```bash
+   py -m pip install PyPDF2
+   ```
+13. Install google-genai module
    ```bash
    py -m pip install google-genai
    ```
-11. Check if the backend is running correctly. **Make sure to always have this running when you want to use the application**
+14. Check if the backend is running correctly. **Make sure to always have this running when you want to use the application**
    ```bash
    py -m uvicorn endpoint:app --reload
    ```

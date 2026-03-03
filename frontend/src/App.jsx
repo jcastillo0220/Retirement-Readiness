@@ -35,7 +35,7 @@ export default function AIChat() {
     handleScenario,
   } = useAIChat();
 
-const TOPIC_BUTTONS = [
+const topic_buttons = [
   { label: "What is a Roth IRA?", prompt: "What is a Roth IRA?", key: "roth_ira" },
   { label: "What is a 401(k)?", prompt: "What is a 401(k)?", key: "401k" },
   { label: "What is a Traditional IRA?", prompt: "What is a Traditional IRA?", key: "traditional_ira" },
@@ -58,8 +58,9 @@ const TOPIC_BUTTONS = [
           <div style={badgeStyle}>{loading ? "Working…" : "Demo • Connected"}</div>
         </div>
 
+        {/* Main Topic Buttons */}
         <TopicButtons
-          buttons={TOPIC_BUTTONS}
+          buttons={topic_buttons}
           loading={loading}
           selectedQuestion={selectedQuestion}
           onAsk={handleAsk}
@@ -81,6 +82,7 @@ const TOPIC_BUTTONS = [
             ))}
         </div>
 
+        {/* User Input Scenario Form */}
         <ScenarioForm onSubmit={handleScenario} />
 
         {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
