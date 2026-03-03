@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { askAI } from "./api";
+import { askAI, runScenario } from "./api";
 import {
   containerStyle,
   shellStyle,
@@ -19,6 +19,39 @@ import {
   correctedPill,
 } from "./styles";
 import ReactMarkdown from "react-markdown";
+
+function ScenarioForm({ onSubmit }) {
+  const [age, setAge] = useState("");
+  const [income, setIncome] = useState("");
+  const [savings, setSavings] = useState("");
+  const [contrib, setContrib] = useState("");
+
+  return (
+    <div style={{ marginBottom: 20, padding: 10 }}>
+      <h3>Personalized Scenario</h3>
+
+      <input placeholder="Age"
+             value={age}
+             onChange={(e) => setAge(e.target.value)} />
+
+      <input placeholder="Annual income"
+             value={income}
+             onChange={(e) => setIncome(e.target.value)} />
+
+      <input placeholder="Current savings"
+             value={savings}
+             onChange={(e) => setSavings(e.target.value)} />
+
+      <input placeholder="Monthly contribution"
+             value={contrib}
+             onChange={(e) => setContrib(e.target.value)} />
+
+      <button onClick={() => onSubmit({ age, income, savings, contrib })}>
+        Run Scenario
+      </button>
+    </div>
+  );
+}
 
 const TOPIC_BUTTONS = [
   { label: "What is a Roth IRA?", prompt: "What is a Roth IRA?", key: "roth_ira" },
@@ -42,55 +75,102 @@ export default function AIChat() {
   const requestIdRef = useRef(0);
 
   async function handleAsk(prompt, label, topicKey) {
-    const myRequestId = ++requestIdRef.current;
+  const id = ++requestIdRef.current;
 
-    setSelectedQuestion(label || "What is a Roth IRA?");
+  const questionLabel = label || "What is a Roth IRA?";
+  const finalPrompt = typeof prompt === "string" ? prompt : questionLabel;
+
+  setSelectedQuestion(questionLabel);
+  setValidated(true);
+  setOriginalAnswer(null);
+  setError(null);
+  setLoading(true);
+
+  try {
+    const res = await askAI({ question: finalPrompt, topicKey, label });
+
+    if (id !== requestIdRef.current) return;
+
+    const finalAnswer = res?.answer ?? "";
+    const suggestions = res?.suggestions ?? [];
+    const isValid = res?.validated ?? true;
+    const orig = res?.original_answer ?? null;
+
+    setAnswer(finalAnswer);
+    setSuggestedButtons(suggestions);
+    setValidated(isValid);
+    setOriginalAnswer(orig);
+    setLabelPrompt(res?.label_prompt || null);
+
+    setHistory((prev) => [
+      ...prev,
+      {
+        id,
+        label: questionLabel,
+        prompt: finalPrompt,
+        topicKey,
+        answer: finalAnswer,
+        validated: isValid,
+        originalAnswer: orig,
+        timestamp: Date.now(),
+        cached: !!res?.cached,
+      },
+    ]);
+  } catch (err) {
+    console.error(err);
+    if (id === requestIdRef.current) {
+      setError("Something went wrong. Try again.");
+    }
+  } finally {
+    if (id === requestIdRef.current) setLoading(false);
+  }
+}
+
+async function handleScenario(inputs) {
+  const id = ++requestIdRef.current;
+
+  setSelectedQuestion("Personalized Scenario");
+  setLoading(true);
+  setError(null);
+
+  try {
+    const res = await runScenario({
+      age: Number(inputs.age),
+      annual_income: Number(inputs.income),
+      current_savings: Number(inputs.savings),
+      monthly_contribution: Number(inputs.contrib),
+    });
+
+    if (id !== requestIdRef.current) return;
+
+    const { projection, explanation } = res;
+
+    setAnswer(explanation);
+    setSuggestedButtons([]); // scenarios don’t use follow-ups
     setValidated(true);
     setOriginalAnswer(null);
-    setError(null);
-    setLoading(true);
 
-    const finalPrompt = typeof prompt === "string" ? prompt : "What is a Roth IRA?";
-
-    try {
-      const res = await askAI({ question: finalPrompt, topicKey, label: label || null });
-
-      if (myRequestId !== requestIdRef.current) return;
-
-      const finalAnswer = res?.answer ?? "";
-      const suggestions = res?.suggestions ?? [];
-      const isValid = res?.validated !== undefined ? res.validated : true;
-      const orig = res?.original_answer ?? null;
-      const labelPromptFromBackend = res?.label_prompt || null;
-
-      setAnswer(finalAnswer);
-      setSuggestedButtons(suggestions);
-      setValidated(isValid);
-      setOriginalAnswer(orig);
-      setLabelPrompt(labelPromptFromBackend);
-
-      setHistory((h) => [
-        ...h,
-        {
-          id: myRequestId,
-          label: label || "What is a Roth IRA?",
-          prompt: finalPrompt,
-          topicKey,
-          answer: finalAnswer,
-          validated: isValid,
-          originalAnswer: orig,
-          timestamp: Date.now(),
-          cached: !!res?.cached,
-        },
-      ]);
-    } catch (err) {
-      console.error(err);
-      if (myRequestId !== requestIdRef.current) return;
-      setError("Something went wrong. Try again.");
-    } finally {
-      if (myRequestId === requestIdRef.current) setLoading(false);
-    }
+    setHistory((prev) => [
+      ...prev,
+      {
+        id,
+        label: "Personalized Scenario",
+        prompt: JSON.stringify(inputs),
+        topicKey: "scenario",
+        answer: explanation,
+        validated: true,
+        originalAnswer: null,
+        timestamp: Date.now(),
+        cached: false,
+        projection,
+      },
+    ]);
+  } catch (err) {
+    if (id === requestIdRef.current) setError("Scenario failed.");
+  } finally {
+    if (id === requestIdRef.current) setLoading(false);
   }
+}
 
   return (
     <div style={containerStyle}>
@@ -145,7 +225,8 @@ export default function AIChat() {
               </button>
             ))}
         </div>
-
+        {/* User Input Form */}
+        <ScenarioForm onSubmit={handleScenario} />
         {/* Selected Question */}
         {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
 
@@ -153,17 +234,37 @@ export default function AIChat() {
         {error && <div style={errorStyle}>{error}</div>}
 
         {/* Loading */}
-        {loading && (
-          <div style={{ ...bubbleStyle, opacity: 0.95, fontStyle: "italic" }}>
-            AI is thinking…
+        {!loading && answer && (
+          <div style={bubbleStyle}>
+            {history[history.length - 1]?.projection && (
+              <pre style={{ background: "#0f184d", padding: 10 }}>
+                {JSON.stringify(history[history.length - 1].projection, null, 2)}
+              </pre>
+            )}
+
+            <ReactMarkdown>{answer}</ReactMarkdown>
+
+            <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+              <span style={validatedPill}>Validated</span>
+            </div>
           </div>
         )}
 
         {/* Current Answer */}
         {!loading && answer && (
           <div style={bubbleStyle}>
+
+            {/* Scenario projection (only if present) */}
+            {history[history.length - 1]?.projection && (
+              <pre style={{ background: "#0f184d", padding: 10 }}>
+                {JSON.stringify(history[history.length - 1].projection, null, 2)}
+              </pre>
+            )}
+
+            {/* Main answer */}
             <ReactMarkdown>{answer}</ReactMarkdown>
 
+            {/* Validation pills */}
             <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
               {validated ? (
                 <span style={validatedPill}>Validated</span>
@@ -214,16 +315,18 @@ export default function AIChat() {
                         cached
                       </span>
                     )}
+
+                    {item.projection && (
+                      <pre style={{ background: "#f7f7f7", padding: 10 }}>
+                        {JSON.stringify(item.projection, null, 2)}
+                      </pre>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-
-        <div style={footerNoteStyle}>
-          Tip: Use the top buttons for a clean 2–3 minute demo. Add “Sources” under answers for extra credibility.
-        </div>
       </div>
     </div>
   );
