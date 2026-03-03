@@ -10,6 +10,10 @@ from cache import make_cache_key, cache_get, cache_set
 from validation import parse_validation_json, build_repair_prompt
 from scenario_engine import compute_projection
 
+from chunking import retrieve_chunks
+from citation_formatter import format_with_citations
+from validation import validate_answer
+
 load_dotenv()
 
 API_KEY = (os.getenv("GOOGLE_API_KEY") or "").strip()
@@ -58,38 +62,96 @@ async def generate(req: Request):
     if cached:
         return {**cached, "cached": True, "label_used": label}
 
-    # Build main prompt
+    # ---------------------------------------------------------
+    # 1. Retrieve chunks (RAG)
+    # ---------------------------------------------------------
+    retrieved_chunks = retrieve_chunks(user_question)
+    if not retrieved_chunks:
+        raise HTTPException(500, "No chunks retrieved — check chunking pipeline.")
+
+    # ---------------------------------------------------------
+    # 2. Build main prompt (your original)
+    # ---------------------------------------------------------
     single_prompt = f"""
-Answer the question below in Markdown. Keep the explanation short and use simple language.
-Do not include examples.
+        Answer the question below in Markdown. Keep the explanation short and use simple language.
+        Do not include examples.
 
-Question:
-\"\"\"{user_question}\"\"\"
+        Question:
+        \"\"\"{user_question}\"\"\"
 
-After the Markdown answer, on a new line output a JSON object EXACTLY in this format:
-{{"validation":"valid"|"invalid"|"uncertain","confidence":1}}
+        After the Markdown answer, on a new line output a JSON object EXACTLY in this format:
+        {{"validation":"valid"|"invalid"|"uncertain","confidence":1}}
 
-- validation must be one of: valid, invalid, uncertain
-- confidence is an integer 1-5
-- Do not output any other JSON or text on the same line as the JSON object.
-""".strip()
+        - validation must be one of: valid, invalid, uncertain
+        - confidence is an integer 1-5
+        - Do not output any other JSON or text on the same line as the JSON object.
+    """.strip()
 
     raw = ask_ai(single_prompt)
     label_prompt = ask_ai(label) if isinstance(label, str) and label.strip() else None
 
+    # ---------------------------------------------------------
+    # 3. Parse JSON token (your original)
+    # ---------------------------------------------------------
     answer_text, meta = parse_validation_json(raw)
 
     validated = True
     original_answer = None
 
+    # ---------------------------------------------------------
+    # 4. If model self-validation fails → repair immediately
+    # ---------------------------------------------------------
     if meta["validation"] in ["invalid", "uncertain"]:
         validated = False
         original_answer = answer_text
         repair_prompt = build_repair_prompt(original_answer, user_question)
-        final_answer = ask_ai(repair_prompt)
+        repaired_raw = ask_ai(repair_prompt)
+        repaired_answer, _ = parse_validation_json(repaired_raw)
+        final_answer = repaired_answer
     else:
         final_answer = answer_text
 
+    # ---------------------------------------------------------
+    # 5. Add natural-language citations
+    # ---------------------------------------------------------
+    answer_with_citations, citation_map = format_with_citations(
+        final_answer,
+        retrieved_chunks
+    )
+
+    # ---------------------------------------------------------
+    # 6. External validator (numeric + citation + grounding)
+    # ---------------------------------------------------------
+    validation = validate_answer(
+        answer_with_citations,
+        citation_map,
+        retrieved_chunks
+    )
+
+    # ---------------------------------------------------------
+    # 7. If external validator fails → repair
+    # ---------------------------------------------------------
+    if not validation["valid"]:
+        validated = False
+        original_answer = final_answer
+
+        repair_prompt = build_repair_prompt(final_answer, user_question)
+        repaired_raw = ask_ai(repair_prompt)
+        repaired_answer, _ = parse_validation_json(repaired_raw)
+
+        # Add citations again after repair
+        answer_with_citations, _ = format_with_citations(
+            repaired_answer,
+            retrieved_chunks
+        )
+
+        final_answer = answer_with_citations
+    else:
+        final_answer = answer_with_citations
+
+    # ---------------------------------------------------------
+    # 8. Suggestions (your original)
+    # ---------------------------------------------------------
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
 
     cache_value = {
@@ -106,40 +168,4 @@ After the Markdown answer, on a new line output a JSON object EXACTLY in this fo
         **cache_value,
         "cached": False,
         "label_used": label,
-    }
-
-@app.post("/api/scenario")
-async def scenario(req: Request):
-    data = await req.json()
-
-    try:
-        inputs = {
-            "age": int(data.get("age", 0)),
-            "annual_income": float(data.get("annual_income", 0)),
-            "current_savings": float(data.get("current_savings", 0)),
-            "monthly_contribution": float(data.get("monthly_contribution", 0)),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid scenario input: {e}")
-
-    from scenario_engine import compute_projection
-    result = compute_projection(**inputs)
-
-    explanation_prompt = f"""
-Explain the following retirement projection in simple language.
-Do not compute anything yourself. Use only the numbers provided.
-
-Projection data:
-{json.dumps(result, indent=2)}
-
-Explain what this means for someone planning for retirement.
-Cite general financial rules (e.g., contribution habits, compound growth, tax-advantaged accounts).
-Keep the explanation short and avoid examples.
-"""
-
-    explanation = ask_ai(explanation_prompt)
-
-    return {
-        "projection": result,
-        "explanation": explanation,
     }

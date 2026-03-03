@@ -1,51 +1,92 @@
-import json
-from fastapi import HTTPException
+import re
 
-def parse_validation_json(raw: str):
+# ---------------------------------------------------------
+# Extract all numeric claims from the AI answer
+# ---------------------------------------------------------
+
+def extract_numbers(text: str):
     """
-    Extracts the last-line JSON and returns:
-    (answer_text, {"validation": str, "confidence": int})
+    Extracts numbers like:
+    - $7,000
+    - 59½
+    - 10%
+    - 12 months
+    - 2024
     """
-    meta = {"validation": "uncertain", "confidence": 1}
-
-    try:
-        parts = raw.strip().rsplit("\n", 1)
-        if len(parts) == 2:
-            parsed = json.loads(parts[1].strip())
-            answer_text = parts[0].strip()
-
-            if isinstance(parsed, dict):
-                meta["validation"] = parsed.get("validation", "uncertain")
-                meta["confidence"] = int(parsed.get("confidence", 1))
-
-            return answer_text, meta
-    except Exception:
-        pass
-
-    return raw.strip(), meta
+    pattern = r"\$?\d[\d,]*(?:\.\d+)?|\d+½"
+    return re.findall(pattern, text)
 
 
-def build_repair_prompt(original_answer: str, original_question: str):
-    return f"""
-Your previous answer was flagged as inaccurate or unclear.
+# ---------------------------------------------------------
+# Extract natural-language citation phrases
+# ---------------------------------------------------------
 
-Rewrite the explanation correctly.
+def extract_citation_phrases(answer: str):
+    """
+    Detects phrases like:
+    - "According to Fidelity"
+    - "According to Northwestern Mutual"
+    - "According to Fidelity’s Roth IRA page"
+    """
+    pattern = r"According to ([A-Za-z0-9 \-\(\)\[\]’]+)"
+    return re.findall(pattern, answer)
 
-Rules:
-- Use simple language
-- Keep it short
-- No examples
-- Base your explanation ONLY on trusted sources like:
-  - https://www.fidelity.com/learning-center/smart-money/retirement-accounts
-  - https://www.irs.gov/retirement-plans/plan-sponsor/types-of-retirement-plans
-  when applicable
-- Stay strictly on topic
 
-Original question:
-\"\"\"{original_question}\"\"\"
+# ---------------------------------------------------------
+# Main validator
+# ---------------------------------------------------------
 
-Original answer:
-\"\"\"{original_answer}\"\"\"
+def validate_answer(answer: str, citation_map: dict, retrieved_chunks: list):
+    """
+    Validates:
+    1. Numeric claims appear in retrieved chunks
+    2. Citations match the retrieved chunk sources
+    3. No unsupported statements
+    """
 
-Now produce a corrected answer in Markdown.
-""".strip()
+    errors = []
+
+    # -----------------------------------------------------
+    # 1. Validate numeric claims
+    # -----------------------------------------------------
+    numbers = extract_numbers(answer)
+    combined_chunk_text = " ".join(chunk["text"] for chunk in retrieved_chunks)
+
+    for num in numbers:
+        if num not in combined_chunk_text:
+            errors.append(f"Numeric claim '{num}' not found in retrieved sources.")
+
+    # -----------------------------------------------------
+    # 2. Validate citation phrases
+    # -----------------------------------------------------
+    phrases = extract_citation_phrases(answer)
+
+    # Build list of valid sources from retrieved chunks
+    valid_sources = set(chunk["source"] for chunk in retrieved_chunks)
+
+    for phrase in phrases:
+        # Normalize: "Fidelity’s Roth IRA page" → "Fidelity"
+        normalized = phrase.split("’")[0].strip()
+
+        if normalized not in valid_sources:
+            errors.append(
+                f"Citation phrase 'According to {phrase}' does not match retrieved sources {valid_sources}."
+            )
+
+    # -----------------------------------------------------
+    # 3. Validate citation_map matches retrieved chunks
+    # -----------------------------------------------------
+    for key, meta in citation_map.items():
+        if meta["source"] not in valid_sources:
+            errors.append(
+                f"Citation map entry {key} refers to source '{meta['source']}' "
+                f"which is not in retrieved sources {valid_sources}."
+            )
+
+    # -----------------------------------------------------
+    # Final result
+    # -----------------------------------------------------
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors
+    }

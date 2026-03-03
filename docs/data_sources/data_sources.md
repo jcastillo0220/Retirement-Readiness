@@ -8,15 +8,6 @@
     - No raw text was copied; only concepts were extracted.
     - Fidelity’s explanations were used to validate tax rules, contribution limits, and distribution basics.
 
-**IRS Retirement Plan Documentation**
-- URL: https://www.irs.gov/retirement-plans/plan-sponsor/types-of-retirement-plans
-- Date accessed: March 2, 2026
-- Type of document: Official U.S. government regulatory documentation.
-- Preprocessing notes:
-    - Used to confirm legal definitions, rollover rules, contribution limits, and penalty rules.
-    - IRS terminology was simplified into plain language.
-    - IRS tables and rules were not copied directly; instead, they were converted into short explanations.
-    - IRS guidance was used to ensure accuracy for Traditional IRA deductibility, RMD rules, and rollover restrictions.
 
 **Northwestern Mutual – Retirement Plans Overview (PDF)**
 - Type of document: Financial institution retirement plan guide.
