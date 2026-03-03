@@ -64,7 +64,7 @@ def extract_visible_text_from_html(html: str) -> str:
 def scrape_and_chunk_url(url: str, source: str, section: str, max_words: int = 200):
     html = fetch_html(url)
     text = extract_visible_text_from_html(html)
-    return chunk_text(text, source, section, max_words=max_words)
+    return chunk_text(text, source, section, url, max_words=max_words)
 
 
 # ============================================================
@@ -86,7 +86,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 
 def chunk_pdf(pdf_path: str, source: str, section: str, max_words: int = 200):
     text = extract_text_from_pdf(pdf_path)
-    return chunk_text(text, source, section, max_words=max_words)
+    return chunk_text(text, source, section, f"file://{pdf_path}", max_words=max_words)
 
 
 # ============================================================
@@ -131,7 +131,7 @@ def load_all_chunks():
     # -------------------------------
     try:
         pdf_chunks = chunk_pdf(
-            pdf_path="docs/data_sources/Retirement Plan Overview.pdf",
+            pdf_path="./docs/data_sources/Retirement Plan Overview.pdf",
             source="NorthwesternMutualPDF",
             section="retirement_plans_overview",
             max_words=200
@@ -146,3 +146,15 @@ try:
     load_all_chunks()
 except Exception as e:
     print(f"Warning: failed to load chunks: {e}")
+
+def retrieve_chunks(question: str):
+    # simple keyword-based retrieval
+    question_lower = question.lower()
+    results = []
+
+    for chunk in CHUNKS:
+        if any(word in chunk["text"].lower() for word in question_lower.split()):
+            results.append(chunk)
+
+    # fallback: return first 5 chunks
+    return results[:5] if results else CHUNKS[:5]
