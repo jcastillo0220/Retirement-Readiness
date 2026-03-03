@@ -49,7 +49,7 @@ export const headerStyle = {
   padding: "18px 18px",
   borderRadius: 18,
   background: colors.card,
-  border: `1px solid ${colors.border}`,
+  border: `2px solid ${colors.border}`,
   boxShadow: colors.shadow,
   backdropFilter: "blur(10px)",
 };
@@ -165,4 +165,42 @@ export const footerNoteStyle = {
   fontSize: 12,
   color: colors.muted,
   padding: "0 6px",
+};
+
+export const scenarioCardStyle = {
+  background: "#240a41",
+  borderRadius: 12,
+  padding: "14px 20px",
+  marginBottom: 20,
+  border: `2px solid ${colors.border}`,
+  boxShadow: colors.shadow,
+  backdropFilter: "blur(10px)",
+};
+
+export const scenarioLabelStyle = {
+  fontSize: 14,
+  fontWeight: 600,
+  marginBottom: 4,
+  color: "#b4bdee",
+};
+
+export const scenarioInputStyle = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: 8,
+  background: "#331257",
+  border: `1px solid ${colors.border}`,
+  marginBottom: 14,
+  fontSize: 14,
+};
+
+export const scenarioButtonStyle = {
+  background: "#231138",
+  color: "white",
+  padding: "10px 16px",
+  borderRadius: 999,
+  border: `1px solid ${colors.border}`,
+  cursor: "pointer",
+  fontWeight: 600,
+  marginTop: 6,
 };
