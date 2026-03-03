@@ -47,11 +47,15 @@ Our venture helps prepare individuals who are on a path to retirement and want t
    ```bash
    py -m pip install fastapi
    ```
-9. Install google-genai module
+9. Install dotenv package
+   ```bash
+   py -m pip install python-dotenv
+   ```
+10. Install google-genai module
    ```bash
    py -m pip install google-genai
    ```
-10. Check if the backend is running
+11. Check if the backend is running correctly. **Make sure to always have this running when you want to use the application**
    ```bash
    py -m uvicorn endpoint:app --reload
    ```
@@ -69,13 +73,17 @@ Our venture helps prepare individuals who are on a path to retirement and want t
    ```bash
    npm install
    ```
-4. Now install vite and restart VS Code after installation.
+4. Install vite and restart VS Code after installation.
    ```bash
    npm install -g vite
    ```
-5. Now Run:
+5. Install Tailwind and PostCSS
+   ```bash
+   npm install -D tailwindcss postcss autoprefixer
+   ```
+6. Now Run:
    ```bash
    npm run dev
    ```
-6. Navigate to the local host link in the terminal
+7. Navigate to the local host link in the terminal. **Make sure you always run your frontend as well when connecting to the application**
 
