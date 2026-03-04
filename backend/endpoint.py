@@ -168,7 +168,6 @@ async def generate(req: Request):
         **cache_value,
         "cached": False,
         "label_used": label,
-<<<<<<< HEAD
     }
 
 @app.post("/api/scenario")
@@ -206,6 +205,4 @@ Keep the explanation short and avoid examples.
     return {
         "projection": result,
         "explanation": explanation,
-=======
->>>>>>> f03f75bcf4c83492c6246d7aa36531c8148b997d
     }
