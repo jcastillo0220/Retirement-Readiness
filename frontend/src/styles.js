@@ -61,9 +61,9 @@ export const brandStyle = {
 };
 
 export const titleStyle = {
-  fontSize: 18,
-  fontWeight: 800,
-  letterSpacing: 0.2,
+  fontSize: 20,
+  fontWeight: 700,
+  letterSpacing: 0.3,
 };
 
 export const subtitleStyle = {

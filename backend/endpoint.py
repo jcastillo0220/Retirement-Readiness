@@ -115,6 +115,7 @@ async def scenario(req: Request):
     try:
         inputs = {
             "age": int(data.get("age", 0)),
+            "retirement_age": int(data.get("retirement_age", 0)),
             "annual_income": float(data.get("annual_income", 0)),
             "current_savings": float(data.get("current_savings", 0)),
             "monthly_contribution": float(data.get("monthly_contribution", 0)),
