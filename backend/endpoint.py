@@ -10,7 +10,7 @@ from cache import make_cache_key, cache_get, cache_set
 from validation import parse_validation_json, build_repair_prompt
 from scenario_engine import compute_projection
 
-from chunking import retrieve_chunks
+from chunking import retrieve_definition_chunks, retrieve_numeric_chunks
 from citation_formatter import format_with_citations
 from validation import validate_answer
 
@@ -46,6 +46,14 @@ def ask_ai(prompt: str) -> str:
 def health():
     return {"status": "ok", "model": MODEL_NAME}
 
+def is_definition_question(q: str) -> bool:
+    q = q.lower()
+    definition_keywords = [
+        "what is", "explain", "define", "definition", "meaning of"
+    ]
+    return any(k in q for k in definition_keywords)
+
+
 @app.post("/api/ai/generate")
 async def generate(req: Request):
     data = await req.json()
@@ -63,35 +71,39 @@ async def generate(req: Request):
         return {**cached, "cached": True, "label_used": label}
 
     # ---------------------------------------------------------
-    # 1. Retrieve chunks (RAG)
+    # 1. Retrieve chunks (PDF for definitions, Fidelity for rules)
     # ---------------------------------------------------------
-    retrieved_chunks = retrieve_chunks(user_question)
+    if is_definition_question(user_question):
+        retrieved_chunks = retrieve_definition_chunks(user_question)
+    else:
+        retrieved_chunks = retrieve_numeric_chunks(user_question)
+
     if not retrieved_chunks:
         raise HTTPException(500, "No chunks retrieved — check chunking pipeline.")
 
     # ---------------------------------------------------------
-    # 2. Build main prompt (your original)
+    # 2. Build main prompt
     # ---------------------------------------------------------
     single_prompt = f"""
-        Answer the question below in Markdown. Keep the explanation short and use simple language.
-        Do not include examples.
+    Answer the question below in Markdown. Keep the explanation short and use simple language.
+    Do not include examples.
 
-        Question:
-        \"\"\"{user_question}\"\"\"
+    Question:
+    \"\"\"{user_question}\"\"\"
 
-        After the Markdown answer, on a new line output a JSON object EXACTLY in this format:
-        {{"validation":"valid"|"invalid"|"uncertain","confidence":1}}
+    After the Markdown answer, on a new line output a JSON object EXACTLY in this format:
+    {{"validation":"valid"|"invalid"|"uncertain","confidence":1}}
 
-        - validation must be one of: valid, invalid, uncertain
-        - confidence is an integer 1-5
-        - Do not output any other JSON or text on the same line as the JSON object.
+    - validation must be one of: valid, invalid, uncertain
+    - confidence is an integer 1-5
+    - Do not output any other JSON or text on the same line as the JSON object.
     """.strip()
 
     raw = ask_ai(single_prompt)
     label_prompt = ask_ai(label) if isinstance(label, str) and label.strip() else None
 
     # ---------------------------------------------------------
-    # 3. Parse JSON token (your original)
+    # 3. Parse JSON token
     # ---------------------------------------------------------
     answer_text, meta = parse_validation_json(raw)
 
@@ -99,7 +111,7 @@ async def generate(req: Request):
     original_answer = None
 
     # ---------------------------------------------------------
-    # 4. If model self-validation fails → repair immediately
+    # 4. Self-validation repair
     # ---------------------------------------------------------
     if meta["validation"] in ["invalid", "uncertain"]:
         validated = False
@@ -112,7 +124,7 @@ async def generate(req: Request):
         final_answer = answer_text
 
     # ---------------------------------------------------------
-    # 5. Add natural-language citations
+    # 5. Add citations
     # ---------------------------------------------------------
     answer_with_citations, citation_map = format_with_citations(
         final_answer,
@@ -120,7 +132,7 @@ async def generate(req: Request):
     )
 
     # ---------------------------------------------------------
-    # 6. External validator (numeric + citation + grounding)
+    # 6. External validator
     # ---------------------------------------------------------
     validation = validate_answer(
         answer_with_citations,
@@ -129,7 +141,7 @@ async def generate(req: Request):
     )
 
     # ---------------------------------------------------------
-    # 7. If external validator fails → repair
+    # 7. External repair if needed
     # ---------------------------------------------------------
     if not validation["valid"]:
         validated = False
@@ -139,7 +151,6 @@ async def generate(req: Request):
         repaired_raw = ask_ai(repair_prompt)
         repaired_answer, _ = parse_validation_json(repaired_raw)
 
-        # Add citations again after repair
         answer_with_citations, _ = format_with_citations(
             repaired_answer,
             retrieved_chunks
@@ -150,7 +161,7 @@ async def generate(req: Request):
         final_answer = answer_with_citations
 
     # ---------------------------------------------------------
-    # 8. Suggestions (your original)
+    # 8. Suggestions
     # ---------------------------------------------------------
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
 
