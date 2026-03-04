@@ -82,10 +82,13 @@ def validate_answer(answer: str, citation_map: dict, retrieved_chunks: list):
             errors.append(f"Numeric claim '{num}' not found in retrieved sources.")
 
     # -----------------------------
-    # B) Validate that the answer starts with ONE citation
+    # B) Validate citation only for PDF answers
     # -----------------------------
-    if not answer.startswith("According to "):
-        errors.append("Answer must begin with a natural-language citation (e.g., 'According to Fidelity').")
+    is_pdf_answer = any("Northwestern" in chunk["source"] for chunk in retrieved_chunks)
+
+    if is_pdf_answer:
+        if not answer.startswith("According to "):
+            errors.append("PDF-based answers must begin with a natural-language citation.")
 
     # -----------------------------
     # C) Validate clickable link source

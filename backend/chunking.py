@@ -8,6 +8,8 @@ TOPIC_MAP = {
     "roth_ira_definition": "definitions",
     "401k_definition": "definitions",
     "ira_definition": "definitions",
+    "rollover_ira_definition": "definitions",
+    "roth_401k_definition": "definitions",
 
     # Numeric rules (Fidelity)
     "roth_ira": "roth_ira",
