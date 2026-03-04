@@ -170,7 +170,6 @@ async def generate(req: Request):
         "confidence": meta["confidence"],
         "suggestions": suggestions,
         "original_answer": original_answer,
-        "label_prompt": label_prompt,
     }
     cache_set(cache_key, cache_value)
 
