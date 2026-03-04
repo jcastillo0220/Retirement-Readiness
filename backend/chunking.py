@@ -44,10 +44,17 @@ def chunk_text(text: str, source: str, section: str, url: str, max_words: int = 
 # ============================================================
 
 def fetch_html(url: str) -> str:
-    resp = requests.get(url, timeout=15)
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/122.0.0.0 Safari/537.36"
+        )
+    }
+
+    resp = requests.get(url, headers=headers, timeout=15)
     resp.raise_for_status()
     return resp.text
-
 
 def extract_visible_text_from_html(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
@@ -108,11 +115,11 @@ def load_all_chunks():
     # FIDELITY RETIREMENT PLAN URLS
     # -------------------------------
     fidelity_urls = {
-        "roth_ira": "https://www.fidelity.com/retirement-ira/roth-ira",
-        "traditional_ira": "https://www.fidelity.com/retirement-ira/traditional-ira",
-        "401k": "https://www.fidelity.com/retirement-ira/401k",
-        "rollover_ira": "https://www.fidelity.com/retirement-ira/rollover-ira",
-        "roth_401k": "https://www.fidelity.com/retirement-ira/roth-401k"
+        "roth_ira": "https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira",
+        "traditional_ira": "https://www.fidelity.com/learning-center/smart-money/what-is-an-ira",
+        "401k": "https://www.fidelity.com/learning-center/smart-money/what-is-a-401k",
+        "rollover_ira": "https://www.fidelity.com/retirement-ira/401k-rollover-ira",
+        "roth_401k": "https://www.fidelity.com/learning-center/personal-finance/roth-401k"
     }
 
     for section, url in fidelity_urls.items():
@@ -131,7 +138,7 @@ def load_all_chunks():
     # -------------------------------
     try:
         pdf_chunks = chunk_pdf(
-            pdf_path="./docs/data_sources/Retirement Plan Overview.pdf",
+            pdf_path= "../docs/data_sources/Retirement Plan Overview.pdf",
             source="NorthwesternMutualPDF",
             section="retirement_plans_overview",
             max_words=200

@@ -82,27 +82,28 @@ def validate_answer(answer: str, citation_map: dict, retrieved_chunks: list):
             errors.append(f"Numeric claim '{num}' not found in retrieved sources.")
 
     # -----------------------------
-    # B) Citation phrase validation
+    # B) Validate that the answer starts with ONE citation
     # -----------------------------
-    phrases = extract_citation_phrases(answer)
-    valid_sources = set(chunk["source"] for chunk in retrieved_chunks)
-
-    for phrase in phrases:
-        normalized = phrase.split("’")[0].strip()
-        if normalized not in valid_sources:
-            errors.append(
-                f"Citation phrase 'According to {phrase}' does not match retrieved sources {valid_sources}."
-            )
+    if not answer.startswith("According to "):
+        errors.append("Answer must begin with a natural-language citation (e.g., 'According to Fidelity').")
 
     # -----------------------------
-    # C) Citation map validation
+    # C) Validate clickable link source
     # -----------------------------
-    for key, meta in citation_map.items():
-        if meta["source"] not in valid_sources:
-            errors.append(
-                f"Citation map entry {key} refers to source '{meta['source']}' "
-                f"which is not in retrieved sources {valid_sources}."
-            )
+    if citation_map:
+        main = citation_map.get("main")
+        if not main:
+            errors.append("Citation map must contain a 'main' entry.")
+        else:
+            cited_source = main["source"]
+            valid_sources = {chunk["source"] for chunk in retrieved_chunks}
+
+            if cited_source not in valid_sources:
+                errors.append(
+                    f"Cited source '{cited_source}' not found in retrieved chunk sources {valid_sources}."
+                )
+    else:
+        errors.append("Citation map is missing.")
 
     return {
         "valid": len(errors) == 0,

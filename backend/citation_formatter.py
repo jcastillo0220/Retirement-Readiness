@@ -28,32 +28,38 @@ def build_source_phrase(chunk):
 
 def format_with_citations(answer: str, retrieved_chunks: list):
     """
-    Instead of [1], [2], this inserts natural-language citations like:
-    "According to Fidelity (link)..."
+    Creates ONE clean natural-language citation at the beginning:
+    'According to [Fidelity](URL), ...'
+
+    And adds a 'Sources:' section at the bottom.
     """
 
-    citation_map = {}
-    citation_phrases = []
+    if not retrieved_chunks:
+        return answer, {}
 
-    # Build citation metadata + natural language phrases
-    for i, chunk in enumerate(retrieved_chunks, start=1):
-        citation_map[str(i)] = {
-            "id": chunk["id"],
-            "source": chunk["source"],
-            "section": chunk.get("section", ""),
-            "url": chunk.get("url", None),
-            "text": chunk["text"]
+    # Pick the FIRST chunk as the primary citation
+    primary = retrieved_chunks[0]
+    source_name = primary["source"]
+    source_url = primary["url"]
+
+    # Build clickable Markdown link
+    clickable = f"[{source_name}]({source_url})"
+
+    # Insert citation at the beginning
+    cited_answer = f"According to {clickable}, {answer.lstrip()}"
+
+    # Build citation map (for validator)
+    citation_map = {
+        "main": {
+            "source": source_name,
+            "url": source_url
         }
+    }
 
-        phrase = build_source_phrase(chunk)
-        citation_phrases.append(phrase)
+    # Add sources list at the bottom
+    unique_urls = {chunk["url"] for chunk in retrieved_chunks}
+    sources_block = "\n\nSources:\n" + "\n".join(f"- {u}" for u in unique_urls)
 
-    # Insert citations at the end of the answer
-    # Example:
-    # "Traditional IRA withdrawals are taxed. According to Fidelity..."
-    formatted_answer = answer.strip()
+    cited_answer += sources_block
 
-    for phrase in citation_phrases:
-        formatted_answer += f" {phrase}."
-
-    return formatted_answer, citation_map
+    return cited_answer, citation_map
