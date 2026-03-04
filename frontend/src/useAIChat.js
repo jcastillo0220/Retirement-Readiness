@@ -72,11 +72,12 @@ export function useAIChat() {
     try {
       const res = await runScenario({
         age: Number(inputs.age),
-        annual_income: Number(inputs.income),
-        current_savings: Number(inputs.savings),
-        monthly_contribution: Number(inputs.contrib),
+        retirement_age: Number(inputs.retirement_age),
+        annual_income: Number(inputs.annual_income),
+        current_savings: Number(inputs.current_savings),
+        monthly_contribution: Number(inputs.monthly_contribution),
       });
-
+      
       if (id !== requestIdRef.current) return;
 
       const { projection, explanation } = res;

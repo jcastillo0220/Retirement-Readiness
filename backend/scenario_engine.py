@@ -1,9 +1,9 @@
 def compute_projection(
     age: int,
+    retirement_age: int,
     annual_income: float,
     current_savings: float,
     monthly_contribution: float,
-    retirement_age: int = 67,
     return_rate: float = 0.05
 ):
     if age < 0 or retirement_age <= age:

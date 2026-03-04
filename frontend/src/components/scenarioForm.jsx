@@ -9,6 +9,7 @@ import {
 
 export default function ScenarioForm({ onSubmit }) {
   const [age, setAge] = useState("");
+  const [retirementAge, setRetirementAge] = useState("");
   const [income, setIncome] = useState("");
   const [savings, setSavings] = useState("");
   const [contrib, setContrib] = useState("");
@@ -46,10 +47,12 @@ export default function ScenarioForm({ onSubmit }) {
   function handleSubmit() {
     if (
       !age ||
+      !retirementAge ||
       !income ||
       !savings ||
       !contrib ||
       Number(age) === 0 ||
+      Number(retirementAge) === 0 ||
       Number(income) === 0 ||
       Number(savings) === 0 ||
       Number(contrib) === 0
@@ -58,8 +61,25 @@ export default function ScenarioForm({ onSubmit }) {
       return;
     }
 
+    if (Number(retirementAge) <= Number(age)) {
+      setError("Retirement age must be greater than current age.");
+      return;
+    }
+
     setError("");
-    onSubmit({ age, income, savings, contrib });
+    const clean = (v) => {
+      const n = Number(v);
+      return isNaN(n) ? 0 : n;
+    };
+
+    onSubmit({
+      age: clean(age),
+      retirement_age: clean(retirementAge),
+      annual_income: clean(income),
+      current_savings: clean(savings),
+      monthly_contribution: clean(contrib),
+    });
+
   }
 
   return (
@@ -84,6 +104,21 @@ export default function ScenarioForm({ onSubmit }) {
           }}
         />
       </div>
+
+        <div style={scenarioLabelStyle}>Target Retirement Age</div>
+        <input
+          type="number"
+          min={Number(age) + 1}
+          max="120"
+          step="1"
+          style={scenarioInputStyle}
+          value={retirementAge}
+          placeholder="e.g., 67"
+          onChange={(e) => {
+            const v = e.target.value;
+            if (/^\d*$/.test(v)) setRetirementAge(v);
+          }}
+        />
 
         <div style={scenarioLabelStyle}>Annual Income</div>
         <input

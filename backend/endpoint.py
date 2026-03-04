@@ -169,3 +169,40 @@ async def generate(req: Request):
         "cached": False,
         "label_used": label,
     }
+
+@app.post("/api/scenario")
+async def scenario(req: Request):
+    data = await req.json()
+
+    try:
+        inputs = {
+            "age": int(data.get("age", 0)),
+            "retirement_age": int(data.get("retirement_age", 0)),
+            "annual_income": float(data.get("annual_income", 0)),
+            "current_savings": float(data.get("current_savings", 0)),
+            "monthly_contribution": float(data.get("monthly_contribution", 0)),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid scenario input: {e}")
+
+    from scenario_engine import compute_projection
+    result = compute_projection(**inputs)
+
+    explanation_prompt = f"""
+Explain the following retirement projection in simple language.
+Do not compute anything yourself. Use only the numbers provided.
+
+Projection data:
+{json.dumps(result, indent=2)}
+
+Explain what this means for someone planning for retirement.
+Cite general financial rules (e.g., contribution habits, compound growth, tax-advantaged accounts).
+Keep the explanation short and avoid examples.
+"""
+
+    explanation = ask_ai(explanation_prompt)
+
+    return {
+        "projection": result,
+        "explanation": explanation,
+    }
