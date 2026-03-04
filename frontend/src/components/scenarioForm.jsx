@@ -4,6 +4,7 @@ import {
   scenarioLabelStyle,
   scenarioInputStyle,
   scenarioButtonStyle,
+  inputBoxStyle,
 } from "../styles";
 
 export default function ScenarioForm({ onSubmit }) {
@@ -87,7 +88,7 @@ export default function ScenarioForm({ onSubmit }) {
         Personalized Scenario
       </h3>
 
-      <div>
+      <div style={{ marginBottom: 10 }}>
         <div style={scenarioLabelStyle}>Age</div>
         <input
           type="number"
@@ -102,6 +103,7 @@ export default function ScenarioForm({ onSubmit }) {
             if (/^\d*$/.test(v)) setAge(v);
           }}
         />
+      </div>
 
         <div style={scenarioLabelStyle}>Target Retirement Age</div>
         <input
@@ -161,6 +163,5 @@ export default function ScenarioForm({ onSubmit }) {
           Run Scenario
         </button>
       </div>
-    </div>
-  );
+   );
 }

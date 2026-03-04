@@ -192,6 +192,7 @@ export const scenarioInputStyle = {
   border: `1px solid ${colors.border}`,
   marginBottom: 14,
   fontSize: 14,
+  outline: "none",
 };
 
 export const scenarioButtonStyle = {
@@ -203,4 +204,15 @@ export const scenarioButtonStyle = {
   cursor: "pointer",
   fontWeight: 600,
   marginTop: 6,
+};
+
+export const inputBoxStyle = {
+  width: "100%",
+  borderRadius: 12,
+  padding: "12px 14px",
+  border: `1px solid ${colors.border}`,
+  background: "rgba(255,255,255,0.05)",
+  color: "#EAF0FF", // white typing color
+  fontSize: 14,
+  outline: "none",
 };
