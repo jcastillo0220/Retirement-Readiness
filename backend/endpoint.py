@@ -100,7 +100,6 @@ async def generate(req: Request):
     """.strip()
 
     raw = ask_ai(single_prompt)
-    label_prompt = ask_ai(label) if isinstance(label, str) and label.strip() else None
 
     # ---------------------------------------------------------
     # 3. Parse JSON token
@@ -198,6 +197,7 @@ async def scenario(req: Request):
 
     from scenario_engine import compute_projection
     result = compute_projection(**inputs)
+    retrieved_chunks = retrieve_numeric_chunks("compound_interest")
 
     explanation_prompt = f"""
         Explain the following retirement projection in simple language.
@@ -207,8 +207,10 @@ async def scenario(req: Request):
         {json.dumps(result, indent=2)}
 
         Explain what this means for someone planning for retirement.
-        Cite general financial rules (e.g., contribution habits, compound growth, tax-advantaged accounts).
-        Keep the explanation short and avoid examples.
+        Base your explanation only on the retrieved financial rules below, 
+            which include general financial principles about contribution habits, compound growth, and tax-advantaged accounts. 
+        Do not use any outside knowledge or assumptions.
+        {"Retrieved financial rules:" + json.dumps(retrieved_chunks, indent=2)}
         """
     explanation = ask_ai(explanation_prompt)
 
