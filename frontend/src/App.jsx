@@ -88,7 +88,7 @@ const topic_buttons = [
         </div>
 
         {/* User Input Scenario Form */}
-        <ScenarioForm onSubmit={handleScenario} />
+        <ScenarioForm onSubmit={handleScenario} loading={loading} />
 
         {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
         {error && <div style={errorStyle}>{error}</div>}

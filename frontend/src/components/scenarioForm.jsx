@@ -8,7 +8,7 @@ import {
   dropdownBodyStyle,
 } from "../styles";
 
-export default function ScenarioForm({ onSubmit }) {
+export default function ScenarioForm({ onSubmit, loading }) {
   const [open, setOpen] = useState(false);
 
   const [age, setAge] = useState("");
@@ -169,8 +169,16 @@ export default function ScenarioForm({ onSubmit }) {
           </div>
         )}
 
-        <button style={scenarioButtonStyle} onClick={handleSubmit}>
-          Run Scenario
+        <button
+          style={{
+            ...scenarioButtonStyle,
+            opacity: loading ? 0.6 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? "Running…" : "Run Scenario"}
         </button>
       </div>
     </div>
