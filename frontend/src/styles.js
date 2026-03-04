@@ -36,7 +36,7 @@ export const containerStyle = {
 
 export const shellStyle = {
   width: "100%",
-  maxWidth: 980,
+  maxWidth: 1000,
   display: "flex",
   flexDirection: "column",
   gap: 14,
@@ -61,7 +61,7 @@ export const brandStyle = {
 };
 
 export const titleStyle = {
-  fontSize: 20,
+  fontSize: 25,
   fontWeight: 700,
   letterSpacing: 0.3,
 };
@@ -93,8 +93,9 @@ export const buttonStyle = {
   color: colors.text,
   borderRadius: 999,
   padding: "10px 14px",
-  fontSize: 13,
-  fontWeight: 650,
+  fontSize: 15,
+  fontWeight: 550,
+  letterSpacing: 0.3,
   transition: "transform 120ms ease, background 120ms ease, border 120ms ease",
   boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
 };
@@ -216,3 +217,22 @@ export const inputBoxStyle = {
   fontSize: 14,
   outline: "none",
 };
+
+export const dropdownHeaderStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  cursor: "pointer",
+  padding: "10px 0",
+  color: "white",
+  fontSize: 16,
+  fontWeight: 600,
+};
+
+export const dropdownBodyStyle = (isOpen) => ({
+  maxHeight: isOpen ? "1000px" : "0px",
+  overflow: "hidden",
+  transition: "max-height 0.35s ease",
+  opacity: isOpen ? 1 : 0,
+  paddingTop: isOpen ? "12px" : "0px",
+});

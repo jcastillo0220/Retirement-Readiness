@@ -4,10 +4,13 @@ import {
   scenarioLabelStyle,
   scenarioInputStyle,
   scenarioButtonStyle,
-  inputBoxStyle,
+  dropdownHeaderStyle,
+  dropdownBodyStyle,
 } from "../styles";
 
 export default function ScenarioForm({ onSubmit }) {
+  const [open, setOpen] = useState(false);
+
   const [age, setAge] = useState("");
   const [retirementAge, setRetirementAge] = useState("");
   const [income, setIncome] = useState("");
@@ -18,21 +21,18 @@ export default function ScenarioForm({ onSubmit }) {
   function formatCurrency(value) {
     if (!value) return "";
 
-    // If user is typing a trailing decimal: "42000."
     if (value.endsWith(".")) {
       const [int] = value.split(".");
       const formattedInt = Number(int).toLocaleString("en-US");
       return "$" + formattedInt + ".";
     }
 
-    // If user is typing a partial decimal: "42000.0" or "42000.05"
     if (/^\d+\.\d*$/.test(value)) {
       const [int, dec] = value.split(".");
       const formattedInt = Number(int).toLocaleString("en-US");
       return "$" + formattedInt + "." + dec;
     }
 
-    // Fully valid number → format normally
     const num = Number(value);
     if (isNaN(num)) return value;
 
@@ -66,12 +66,12 @@ export default function ScenarioForm({ onSubmit }) {
       return;
     }
 
-    setError("");
     const clean = (v) => {
       const n = Number(v);
       return isNaN(n) ? 0 : n;
     };
 
+    setError("");
     onSubmit({
       age: clean(age),
       retirement_age: clean(retirementAge),
@@ -79,31 +79,41 @@ export default function ScenarioForm({ onSubmit }) {
       current_savings: clean(savings),
       monthly_contribution: clean(contrib),
     });
-
   }
 
   return (
     <div style={scenarioCardStyle}>
-      <h3 style={{ ...scenarioLabelStyle, fontSize: 16, marginBottom: 14 }}>
-        Personalized Scenario
-      </h3>
-
-      <div style={{ marginBottom: 10 }}>
-        <div style={scenarioLabelStyle}>Age</div>
-        <input
-          type="number"
-          min="0"
-          max="120"
-          step="1"
-          style={scenarioInputStyle}
-          value={age}
-          placeholder="e.g., 42"
-          onChange={(e) => {
-            const v = e.target.value;
-            if (/^\d*$/.test(v)) setAge(v);
+      {/* Dropdown Header */}
+      <div style={dropdownHeaderStyle} onClick={() => setOpen(!open)}>
+        <span>Personalized Scenario: Compound Interest</span>
+        <span
+          style={{
+            transform: open ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "0.2s",
           }}
-        />
+        >
+          ▶
+        </span>
       </div>
+
+      {/* Dropdown Body */}
+      <div style={dropdownBodyStyle(open)}>
+        <div style={{ marginBottom: 10 }}>
+          <div style={scenarioLabelStyle}>Age</div>
+          <input
+            type="number"
+            min="0"
+            max="120"
+            step="1"
+            style={scenarioInputStyle}
+            value={age}
+            placeholder="e.g., 42"
+            onChange={(e) => {
+              const v = e.target.value;
+              if (/^\d*$/.test(v)) setAge(v);
+            }}
+          />
+        </div>
 
         <div style={scenarioLabelStyle}>Target Retirement Age</div>
         <input
@@ -163,5 +173,6 @@ export default function ScenarioForm({ onSubmit }) {
           Run Scenario
         </button>
       </div>
-   );
+    </div>
+  );
 }

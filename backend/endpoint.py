@@ -189,17 +189,16 @@ async def scenario(req: Request):
     result = compute_projection(**inputs)
 
     explanation_prompt = f"""
-Explain the following retirement projection in simple language.
-Do not compute anything yourself. Use only the numbers provided.
+        Explain the following retirement projection in simple language.
+        Do not compute anything yourself. Use only the numbers provided.
 
-Projection data:
-{json.dumps(result, indent=2)}
+        Projection data:
+        {json.dumps(result, indent=2)}
 
-Explain what this means for someone planning for retirement.
-Cite general financial rules (e.g., contribution habits, compound growth, tax-advantaged accounts).
-Keep the explanation short and avoid examples.
-"""
-
+        Explain what this means for someone planning for retirement.
+        Cite general financial rules (e.g., contribution habits, compound growth, tax-advantaged accounts).
+        Keep the explanation short and avoid examples.
+        """
     explanation = ask_ai(explanation_prompt)
 
     return {
