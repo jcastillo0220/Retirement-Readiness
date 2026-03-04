@@ -140,7 +140,7 @@ def load_all_chunks():
         "401k": "https://www.fidelity.com/learning-center/smart-money/what-is-a-401k",
         "rollover_ira": "https://www.fidelity.com/retirement-ira/401k-rollover-ira",
         "roth_401k": "https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k",
-        "compound_interest": "https://www.fidelity.com/learning-center/smart-money/compound-interest"
+        "compound_interest": "https://www.fidelity.com/learning-center/trading-investing/compound-interest"
     }
 
     for section, url in fidelity_urls.items():
