@@ -120,11 +120,11 @@ def load_all_chunks():
     # LOAD FIDELITY NUMERIC RULES
     # -------------------------------
     fidelity_urls = {
-        "roth_ira": "https://www.fidelity.com/retirement-ira/roth-ira",
-        "traditional_ira": "https://www.fidelity.com/retirement-ira/traditional-ira",
-        "401k": "https://www.fidelity.com/retirement-ira/401k",
-        "rollover_ira": "https://www.fidelity.com/retirement-ira/rollover-ira/overview",
-        "roth_401k": "https://www.fidelity.com/retirement-ira/roth-401k/overview"
+        "roth_ira": "https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira",
+        "traditional_ira": "https://www.fidelity.com/learning-center/smart-money/what-is-an-ira",
+        "401k": "https://www.fidelity.com/learning-center/smart-money/what-is-a-401k",
+        "rollover_ira": "https://www.fidelity.com/retirement-ira/401k-rollover-ira",
+        "roth_401k": "https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k"
     }
 
     for section, url in fidelity_urls.items():
