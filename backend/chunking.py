@@ -3,6 +3,21 @@ import requests
 from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
 
+TOPIC_MAP = {
+    # Definitions (PDF)
+    "roth_ira_definition": "definitions",
+    "401k_definition": "definitions",
+    "ira_definition": "definitions",
+
+    # Numeric rules (Fidelity)
+    "roth_ira": "roth_ira",
+    "traditional_ira": "traditional_ira",
+    "401k": "401k",
+    "rollover_ira": "rollover_ira",
+    "roth_401k": "roth_401k",
+    "compound_interest": "compound_interest",
+}
+
 # ============================================================
 # 1. GENERIC CHUNKING FUNCTIONS
 # ============================================================
@@ -107,7 +122,7 @@ def load_all_chunks():
     try:
         pdf_chunks = chunk_pdf(
             pdf_path="../docs/data_sources/Retirement Plan Overview.pdf",
-            source="NorthwesternMutualPDF",
+            source="Northwestern Mutual",
             section="definitions",
             max_words=200
         )
@@ -153,23 +168,36 @@ except Exception as e:
 # 5. RETRIEVAL FUNCTIONS
 # ============================================================
 
-def retrieve_definition_chunks(question: str):
-    q = question.lower()
+def retrieve_definition_chunks(topic: str):
+    topic = topic.lower()
+
+    section = TOPIC_MAP.get(topic, "definitions")
+
+    matches = [
+        chunk for chunk in PDF_CHUNKS
+        if chunk["section"].lower() == section
+    ]
+
+    return matches[:5] if matches else PDF_CHUNKS[:5]
+
+def retrieve_numeric_chunks(topic: str):
+    topic = topic.lower()
+
+    section = TOPIC_MAP.get(topic)
+
+    # Exact section match first
+    if section:
+        exact = [
+            chunk for chunk in FIDELITY_CHUNKS
+            if chunk["section"].lower() == section
+        ]
+        if exact:
+            return exact[:5]
+
+    # Fallback keyword match
     results = []
-
-    for chunk in PDF_CHUNKS:
-        if any(word in chunk["text"].lower() for word in q.split()):
-            results.append(chunk)
-
-    return results[:5] if results else PDF_CHUNKS[:5]
-
-
-def retrieve_numeric_chunks(question: str):
-    q = question.lower()
-    results = []
-
     for chunk in FIDELITY_CHUNKS:
-        if any(word in chunk["text"].lower() for word in q.split()):
+        if any(word in chunk["text"].lower() for word in topic.split()):
             results.append(chunk)
 
     return results[:5] if results else FIDELITY_CHUNKS[:5]

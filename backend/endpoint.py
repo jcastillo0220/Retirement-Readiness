@@ -2,6 +2,7 @@ import os
 import json
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from google import genai
 
@@ -54,6 +55,20 @@ def is_definition_question(q: str) -> bool:
     return any(k in q for k in definition_keywords)
 
 
+@app.get("/pdf/retirement-overview")
+async def get_pdf():
+    pdf_path = "../docs/data_sources/Retirement Plan Overview.pdf"
+
+    if not os.path.exists(pdf_path):
+        raise HTTPException(status_code=404, detail="PDF file not found.")
+
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename="Retirement Plan Overview.pdf"
+    )
+
+
 @app.post("/api/ai/generate")
 async def generate(req: Request):
     data = await req.json()
@@ -74,9 +89,9 @@ async def generate(req: Request):
     # 1. Retrieve chunks (PDF for definitions, Fidelity for rules)
     # ---------------------------------------------------------
     if is_definition_question(user_question):
-        retrieved_chunks = retrieve_definition_chunks(user_question)
+        retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:
-        retrieved_chunks = retrieve_numeric_chunks(user_question)
+        retrieved_chunks = retrieve_numeric_chunks(topic_key)
 
     if not retrieved_chunks:
         raise HTTPException(500, "No chunks retrieved — check chunking pipeline.")
