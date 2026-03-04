@@ -196,7 +196,12 @@ async def scenario(req: Request):
 
     from scenario_engine import compute_projection
     result = compute_projection(**inputs)
+
+    # Retrieve chunks
     retrieved_chunks = retrieve_numeric_chunks("compound_interest")
+
+    # Build prompt
+    rules_text = "\n".join(chunk["text"] for chunk in retrieved_chunks)
 
     explanation_prompt = f"""
         Explain the following retirement projection in simple language.
@@ -205,15 +210,25 @@ async def scenario(req: Request):
         Projection data:
         {json.dumps(result, indent=2)}
 
-        Explain what this means for someone planning for retirement.
-        Base your explanation only on the retrieved financial rules below, 
-            which include general financial principles about contribution habits, compound growth, and tax-advantaged accounts. 
+        You must base your explanation only on the financial rules in the section labeled FINANCIAL_RULES.
         Do not use any outside knowledge or assumptions.
-        {"Retrieved financial rules:" + json.dumps(retrieved_chunks, indent=2)}
+
+        FINANCIAL_RULES:
+        {rules_text}
+        END_FINANCIAL_RULES
+
+        At all times, restrict your explanation to the FINANCIAL_RULES section.
+        If a concept is not present in FINANCIAL_RULES, do not mention it.
         """
-    explanation = ask_ai(explanation_prompt)
+
+    # Ask AI
+    raw_explanation = ask_ai(explanation_prompt)
+
+    # Apply citation formatting
+    final_explanation, citation_map = format_with_citations(raw_explanation, retrieved_chunks)
 
     return {
         "projection": result,
-        "explanation": explanation,
+        "explanation": final_explanation,
+        "citations": citation_map,
     }
