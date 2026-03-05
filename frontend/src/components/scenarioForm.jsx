@@ -123,7 +123,7 @@ export default function ScenarioForm({ onSubmit, loading }) {
           step="1"
           style={scenarioInputStyle}
           value={retirementAge}
-          placeholder="e.g., 67"
+          placeholder="e.g., 65"
           onChange={(e) => {
             const v = e.target.value;
             if (/^\d*$/.test(v)) setRetirementAge(v);

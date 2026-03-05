@@ -14,13 +14,9 @@ def compute_projection(
     P = current_savings
     C = monthly_contribution
 
-    # Compound growth on current savings
-    future_principal = P * ((1 + r) ** years)
-
-    # Future value of monthly contributions
-    future_contrib = C * 12 * (((1 + r) ** years - 1) / r)
-
-    projected = future_principal + future_contrib
+    # Compound Interest Formula: A = P(1 + r/n)^(nt)
+    # Since we are compounding monthly, n = 12, and t = years
+    compound_projection = P * ((1 + r / 12) ** (12 * years))
 
     return {
         "age": age,
@@ -30,5 +26,5 @@ def compute_projection(
         "current_savings": current_savings,
         "monthly_contribution": monthly_contribution,
         "assumed_return_rate": return_rate,
-        "projected_balance": round(projected, 2),
+        "projected_balance": compound_projection,
     }
