@@ -243,7 +243,6 @@ async def scenario(req: Request):
     final_explanation, citation_map = format_with_citations(raw_explanation, retrieved_chunks)
 
     return {
-        "projection": result,
         "explanation": final_explanation,
         "citations": citation_map,
     }
