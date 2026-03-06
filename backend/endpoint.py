@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -13,6 +14,11 @@ from scenario_engine import compute_projection
 
 from chunking import retrieve_definition_chunks, retrieve_numeric_chunks
 from citation_formatter import format_with_citations
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s: %(message)s"
+)
 
 load_dotenv()
 
@@ -94,6 +100,15 @@ async def generate(req: Request):
 
     if not retrieved_chunks:
         raise HTTPException(500, "No chunks retrieved — check chunking pipeline.")
+
+    logging.info("Retrieved Chunks:")
+    for i, chunk in enumerate(retrieved_chunks, start=1):
+        logging.info(
+            f"\n--- Chunk {i} ---\n"
+            f"ID: {chunk.get('id')}\n"
+            f"url: {chunk.get('url')}\n"
+            f"Text:\n{chunk.get('text')}\n"
+        )
 
     # ---------------------------------------------------------
     # 2. Build main prompt
@@ -217,10 +232,10 @@ async def scenario(req: Request):
     rules_text = "\n".join(chunk["text"] for chunk in retrieved_chunks)
 
     explanation_prompt = f"""
-        Explain the following retirement projection in simple language.
+        Explain the following retirement projection in a short response using simple language.
         Do not compute anything yourself. Use only the numbers provided.
-        Mention all reslts in your explanation and how they relate to each other. 
-        Use the exact same terminology as the rules provided.
+        Mention all reslts in your explanation and how they relate to each other.
+        Make sure the results are in a clear format in the explanation. 
         Include any addtional fonts or formatting to make it clear and easy to read.
 
         Projection data:
@@ -244,6 +259,15 @@ async def scenario(req: Request):
 
     # Apply citation formatting
     final_explanation, citation_map = format_with_citations(raw_explanation, retrieved_chunks)
+
+    logging.info("Retrieved Chunks:")
+    for i, chunk in enumerate(retrieved_chunks, start=1):
+        logging.info(
+            f"\n--- Chunk {i} ---\n"
+            f"ID: {chunk.get('id')}\n"
+            f"url: {chunk.get('url')}\n"
+            f"Text:\n{chunk.get('text')}\n"
+        )
 
     return {
         "explanation": final_explanation,

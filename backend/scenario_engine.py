@@ -16,7 +16,8 @@ def compute_projection(
     # Compound Interest Formula: A = P(1 + r/n)^(nt)
     # Since we are compounding monthly, n = 12, and t = years
     A = P * ((1 + r / 12) ** (12 * years))
-    future_value = A + PMT * (((1 + r / 12) ** (12 * years) - 1) / (r / 12))
+    future_contribution = PMT * (((1 + r / 12) ** (12 * years) - 1) / (r / 12))
+    future_value = round(A + future_contribution, 2)
 
     return {
         "age": age,
