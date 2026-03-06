@@ -8,12 +8,11 @@ from google import genai
 
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
-from validation import parse_validation_json, build_repair_prompt
+from validatior import parse_validation_json, build_repair_prompt, validate_answer
 from scenario_engine import compute_projection
 
 from chunking import retrieve_definition_chunks, retrieve_numeric_chunks
 from citation_formatter import format_with_citations
-from validation import validate_answer
 
 load_dotenv()
 
@@ -202,7 +201,6 @@ async def scenario(req: Request):
         inputs = {
             "age": int(data.get("age", 0)),
             "retirement_age": int(data.get("retirement_age", 0)),
-            "annual_income": float(data.get("annual_income", 0)),
             "current_savings": float(data.get("current_savings", 0)),
             "monthly_contribution": float(data.get("monthly_contribution", 0)),
         }
@@ -221,6 +219,9 @@ async def scenario(req: Request):
     explanation_prompt = f"""
         Explain the following retirement projection in simple language.
         Do not compute anything yourself. Use only the numbers provided.
+        Mention all reslts in your explanation and how they relate to each other. 
+        Use the exact same terminology as the rules provided.
+        Include any addtional fonts or formatting to make it clear and easy to read.
 
         Projection data:
         {json.dumps(result, indent=2)}
@@ -233,7 +234,9 @@ async def scenario(req: Request):
         END_FINANCIAL_RULES
 
         At all times, restrict your explanation to the FINANCIAL_RULES section.
-        If a concept is not present in FINANCIAL_RULES, do not mention it.
+        If a concept is not present in FINANCIAL_RULES, do not mention it. 
+        Do not explicity say "FINANCIAL_RULES" say the website's name (no .com) you are referencing in BOLD font. 
+        Just use the rules as the basis for your explanation.
         """
 
     # Ask AI

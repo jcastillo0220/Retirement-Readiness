@@ -43,7 +43,7 @@ def format_with_citations(answer: str, retrieved_chunks: list):
         else:
             sources_lines.append(f"- {u}")
 
-    sources_block = "Sources:\n" + "\n".join(sources_lines)
+    sources_block = "\nSource:\n" + "\n".join(sources_lines)
 
     # Add blank line before sources block
     cited_answer += f"\n\n{sources_block}"
