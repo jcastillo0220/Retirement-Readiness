@@ -13,7 +13,6 @@ export default function ScenarioForm({ onSubmit, loading }) {
 
   const [age, setAge] = useState("");
   const [retirementAge, setRetirementAge] = useState("");
-  const [income, setIncome] = useState("");
   const [savings, setSavings] = useState("");
   const [contrib, setContrib] = useState("");
   const [error, setError] = useState("");
@@ -48,12 +47,10 @@ export default function ScenarioForm({ onSubmit, loading }) {
     if (
       !age ||
       !retirementAge ||
-      !income ||
       !savings ||
       !contrib ||
       Number(age) === 0 ||
       Number(retirementAge) === 0 ||
-      Number(income) === 0 ||
       Number(savings) === 0 ||
       Number(contrib) === 0
     ) {
@@ -75,7 +72,6 @@ export default function ScenarioForm({ onSubmit, loading }) {
     onSubmit({
       age: clean(age),
       retirement_age: clean(retirementAge),
-      annual_income: clean(income),
       current_savings: clean(savings),
       monthly_contribution: clean(contrib),
     });
@@ -130,21 +126,10 @@ export default function ScenarioForm({ onSubmit, loading }) {
           }}
         />
 
-        <div style={scenarioLabelStyle}>Annual Income</div>
-        <input
-          style={scenarioInputStyle}
-          placeholder="e.g., 55000"
-          value={formatCurrency(income)}
-          onChange={(e) => {
-            const raw = e.target.value.replace(/[^0-9.]/g, "");
-            if (/^\d*\.?\d*$/.test(raw)) setIncome(raw);
-          }}
-        />
-
         <div style={scenarioLabelStyle}>Current Savings</div>
         <input
           style={scenarioInputStyle}
-          placeholder="e.g., 15000"
+          placeholder="e.g., 1,500"
           value={formatCurrency(savings)}
           onChange={(e) => {
             const raw = e.target.value.replace(/[^0-9.]/g, "");
