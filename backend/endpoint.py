@@ -9,7 +9,7 @@ from google import genai
 
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
-from validatior import parse_validation_json, build_repair_prompt, validate_answer
+from validator import parse_validation_json, build_repair_prompt, validate_answer
 from scenario_engine import compute_projection
 
 from chunking import retrieve_definition_chunks, retrieve_numeric_chunks
