@@ -2,8 +2,8 @@
 
 | # | User Query | Expected Source Document | Retrieved Documents | Generated Answer | Citation Verification | Grounding Check |
 |---|------------|---------------------------|----------------------|-------------------|------------------------|------------------|
-| 1 | What is a Roth IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | | Northwestern Mutual PDF | Pass | 
-| 2 | What is a 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | | Northwestern Mutual PDF | Pass | 
+| 1 | What is a Roth IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... qualified withdrawals in retirement are also tax-free | Northwestern Mutual PDF | Pass | 
+| 2 | What is a 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual...  | Northwestern Mutual PDF | Pass | 
 | 3 | What is a roth 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | | Northwestern Mutual PDF | Pass | 
 | 4 | What is a rollover IRA? | Expected Northwestern Mutual PDF | Northwestern Mutual PDF | | Northwestern Mutual PDF | Pass |
 | 5 | What is a traditional IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | | Northwestern Mutual PDF | Pass |
