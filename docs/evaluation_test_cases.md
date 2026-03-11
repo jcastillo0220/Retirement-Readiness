@@ -18,3 +18,7 @@
 | 18 | What is the tax treatment of Roth IRA withdrawals? | Fidelity Roth IRA Page | | | Expected: Fidelity Roth IRA | | |
 | 19 | How do employer matches work in a 401(k)? | Fidelity 401(k) Page | | | Expected: Fidelity 401(k) | | |
 | 20 | What is the benefit of saving early for retirement? | Fidelity Compound Interest Page | | | Expected: Fidelity compound interest | | |
+
+# Required metrics
+
+| Retriveal Accuracy | Citation Accuracy | Grounding Pass Rate | Refusal Accuracy |
