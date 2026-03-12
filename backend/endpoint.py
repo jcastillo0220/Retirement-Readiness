@@ -79,7 +79,18 @@ async def generate(req: Request):
     data = await req.json()
 
     user_question = (data.get("question") or "").strip()
-    topic_key = data.get("topicKey")
+
+    # Accept both camelCase and snake_case from frontend
+    topic_key = (
+        data.get("topicKey") or
+        data.get("topic_key") or
+        "definitions"   # fallback for suggested buttons
+    )
+
+    # Safety fallback
+    if not topic_key:
+        topic_key = "definitions"
+
     label = data.get("label")
 
     if not user_question:
@@ -206,70 +217,4 @@ async def generate(req: Request):
         **cache_value,
         "cached": False,
         "label_used": label,
-    }
-
-@app.post("/api/scenario")
-async def scenario(req: Request):
-    data = await req.json()
-
-    try:
-        inputs = {
-            "age": int(data.get("age", 0)),
-            "retirement_age": int(data.get("retirement_age", 0)),
-            "current_savings": float(data.get("current_savings", 0)),
-            "monthly_contribution": float(data.get("monthly_contribution", 0)),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid scenario input: {e}")
-
-    from scenario_engine import compute_projection
-    result = compute_projection(**inputs)
-
-    # Retrieve chunks
-    retrieved_chunks = retrieve_numeric_chunks("compound_interest")
-
-    # Build prompt
-    rules_text = "\n".join(chunk["text"] for chunk in retrieved_chunks)
-
-    explanation_prompt = f"""
-        Explain the following retirement projection in a short response using simple language.
-        Do not compute anything yourself. Use only the numbers provided.
-        Mention all reslts in your explanation and how they relate to each other.
-        Make sure the results are in a clear format in the explanation. 
-        Include any addtional fonts or formatting to make it clear and easy to read.
-
-        Projection data:
-        {json.dumps(result, indent=2)}
-
-        You must base your explanation only on the financial rules in the section labeled FINANCIAL_RULES.
-        Do not use any outside knowledge or assumptions.
-
-        FINANCIAL_RULES:
-        {rules_text}
-        END_FINANCIAL_RULES
-
-        At all times, restrict your explanation to the FINANCIAL_RULES section.
-        If a concept is not present in FINANCIAL_RULES, do not mention it. 
-        Do not explicity say "FINANCIAL_RULES" say the website's name (no .com) you are referencing in BOLD font. 
-        Just use the rules as the basis for your explanation.
-        """
-
-    # Ask AI
-    raw_explanation = ask_ai(explanation_prompt)
-
-    # Apply citation formatting
-    final_explanation, citation_map = format_with_citations(raw_explanation, retrieved_chunks)
-
-    logging.info("Retrieved Chunks:")
-    for i, chunk in enumerate(retrieved_chunks, start=1):
-        logging.info(
-            f"\n--- Chunk {i} ---\n"
-            f"ID: {chunk.get('id')}\n"
-            f"url: {chunk.get('url')}\n"
-            f"Text:\n{chunk.get('text')}\n"
-        )
-
-    return {
-        "explanation": final_explanation,
-        "citations": citation_map,
     }

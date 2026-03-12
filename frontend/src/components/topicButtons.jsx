@@ -13,7 +13,7 @@ export default function TopicButtons({
         return (
           <button
             key={btn.key}
-            onClick={() => onAsk(btn.prompt, btn.label, btn.key)}
+            onClick={() => onAsk(btn.prompt, btn.key, btn.label)}
             disabled={loading}
             style={{
               ...buttonStyle,

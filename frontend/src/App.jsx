@@ -79,7 +79,7 @@ const topic_buttons = [
             suggestedButtons.map((item, index) => (
               <button
                 key={index}
-                onClick={() => handleAsk(item.prompt, item.label, null)}
+                onClick={() => handleAsk(item.prompt, "definitions", item.label)}
                 style={suggestionStyle}
               >
                 {item.label}

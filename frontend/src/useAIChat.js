@@ -14,20 +14,27 @@ export function useAIChat() {
 
   const requestIdRef = useRef(0);
 
-  async function handleAsk(prompt, label, topicKey) {
+  // UPDATED SIGNATURE: (prompt, topicKey, label)
+  async function handleAsk(prompt, topicKey, label) {
     const id = ++requestIdRef.current;
 
-    const questionLabel = label || "What is a Roth IRA?";
-    const finalPrompt = typeof prompt === "string" ? prompt : questionLabel;
+    const finalPrompt = prompt;               // AI receives full prompt
+    const finalTopicKey = topicKey || "definitions";
+    const questionLabel = label;              // UI shows short label ONLY
 
-    setSelectedQuestion(questionLabel);
+    setSelectedQuestion(questionLabel || "");       // ⭐ FIXED — UI uses label
     setValidated(true);
     setOriginalAnswer(null);
     setError(null);
     setLoading(true);
 
     try {
-      const res = await askAI({ question: finalPrompt, topicKey, label });
+      const res = await askAI({
+        question: finalPrompt,
+        topicKey: finalTopicKey,
+        label: questionLabel
+      });
+
       if (id !== requestIdRef.current) return;
 
       const finalAnswer = res?.answer ?? "";
@@ -45,9 +52,9 @@ export function useAIChat() {
         ...prev,
         {
           id,
-          label: questionLabel,
-          prompt: finalPrompt,
-          topicKey,
+          label: questionLabel,   // ⭐ short label
+          prompt: finalPrompt,    // ⭐ full prompt
+          topicKey: finalTopicKey,
           answer: finalAnswer,
           validated: isValid,
           originalAnswer: orig,
@@ -77,7 +84,7 @@ export function useAIChat() {
         current_savings: Number(inputs.current_savings),
         monthly_contribution: Number(inputs.monthly_contribution),
       });
-      
+
       if (id !== requestIdRef.current) return;
 
       const { projection, explanation } = res;
