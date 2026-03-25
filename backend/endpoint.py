@@ -42,11 +42,22 @@ def ask_ai(prompt: str) -> str:
     try:
         resp = client.models.generate_content(
             model=MODEL_NAME,
-            contents=prompt,
+            contents=[
+                {
+                    "role": "user",
+                    "parts": [
+                        {"text": prompt}
+                    ]
+                }
+            ]
         )
         return (getattr(resp, "text", "") or "").strip()
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gemini error: {type(e).__name__}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gemini error: {type(e).__name__}: {str(e)}"
+        )
 
 @app.get("/health")
 def health():
