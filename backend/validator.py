@@ -1,9 +1,6 @@
 import json
 import re
 
-# ============================================================
-# 1. JSON TOKEN PARSER (your original)
-# ============================================================
 
 def parse_validation_json(raw: str):
     meta = {"validation": "uncertain", "confidence": 1}
@@ -14,9 +11,8 @@ def parse_validation_json(raw: str):
             parsed = json.loads(parts[1].strip())
             answer_text = parts[0].strip()
 
-            if isinstance(parsed, dict):
-                meta["validation"] = parsed.get("validation", "uncertain")
-                meta["confidence"] = int(parsed.get("confidence", 1))
+            meta["validation"] = parsed.get("validation", "uncertain")
+            meta["confidence"] = int(parsed.get("confidence", 1))
 
             return answer_text, meta
     except Exception:
@@ -25,88 +21,76 @@ def parse_validation_json(raw: str):
     return raw.strip(), meta
 
 
-# ============================================================
-# 2. REPAIR PROMPT (your original)
-# ============================================================
+def build_repair_prompt(answer, question, errors=None):
+    error_text = "\n".join(f"- {e}" for e in errors) if errors else "General failure"
 
-def build_repair_prompt(original_answer: str, original_question: str):
     return f"""
-Your previous answer was flagged as inaccurate or unclear.
+Fix the answer below.
 
-Rewrite the explanation correctly.
+Question:
+{question}
+
+Bad Answer:
+{answer}
+
+Issues:
+{error_text}
 
 Rules:
-- Use simple language
-- Keep it short
-- No examples
-- Base your explanation ONLY on trusted sources like:
-  - https://www.fidelity.com/learning-center/smart-money/retirement-accounts
-  - https://www.irs.gov/retirement-plans/plan-sponsor/types-of-retirement-plans
-- Stay strictly on topic
+- Keep it simple
+- Stay accurate
+- Use only provided sources
+- No hallucinations
 
-Original question:
-\"\"\"{original_question}\"\"\"
-
-Original answer:
-\"\"\"{original_answer}\"\"\"
-
-Now produce a corrected answer in Markdown.
+Return:
+Answer + JSON validation at end
 """.strip()
 
 
-# ============================================================
-# 3. EXTERNAL VALIDATOR (numeric + citation + grounding)
-# ============================================================
-
-def extract_numbers(text: str):
-    pattern = r"\$?\d[\d,]*(?:\.\d+)?|\d+½"
-    return re.findall(pattern, text)
+def extract_numbers(text):
+    return re.findall(r"\$?\d[\d,]*(?:\.\d+)?", text)
 
 
-def extract_citation_phrases(answer: str):
-    pattern = r"According to ([A-Za-z0-9 \-\(\)\[\]’]+)"
-    return re.findall(pattern, answer)
+def normalize(num):
+    return num.replace("$", "").replace(",", "")
 
 
-def validate_answer(answer: str, citation_map: dict, retrieved_chunks: list):
+def validate_answer(answer, citation_map, chunks):
     errors = []
 
-    # -----------------------------
-    # A) Numeric validation
-    # -----------------------------
-    numbers = extract_numbers(answer)
-    combined_chunk_text = " ".join(chunk["text"] for chunk in retrieved_chunks)
+    if not answer:
+        return {"valid": False, "errors": ["Empty answer"]}
 
-    for num in numbers:
-        if num not in combined_chunk_text:
-            errors.append(f"Numeric claim '{num}' not found in retrieved sources.")
+    combined = " ".join(c.get("text", "") for c in chunks)
 
-    # -----------------------------
-    # B) Validate citation only for PDF answers
-    # -----------------------------
-    is_pdf_answer = any("Northwestern" in chunk["source"] for chunk in retrieved_chunks)
+    # -----------------
+    # Numbers
+    # -----------------
+    for num in extract_numbers(answer):
+        if normalize(num) not in normalize(combined):
+            errors.append(f"Number {num} not found in sources")
 
-    if is_pdf_answer:
-        if not answer.startswith("According to "):
-            errors.append("PDF-based answers must begin with a natural-language citation.")
+    # -----------------
+    # Citation check
+    # -----------------
+    if not citation_map or "main" not in citation_map:
+        errors.append("Missing citation")
 
-    # -----------------------------
-    # C) Validate clickable link source
-    # -----------------------------
-    if citation_map:
-        main = citation_map.get("main")
-        if not main:
-            errors.append("Citation map must contain a 'main' entry.")
-        else:
-            cited_source = main["source"]
-            valid_sources = {chunk["source"] for chunk in retrieved_chunks}
-
-            if cited_source not in valid_sources:
-                errors.append(
-                    f"Cited source '{cited_source}' not found in retrieved chunk sources {valid_sources}."
-                )
     else:
-        errors.append("Citation map is missing.")
+        source = citation_map["main"].get("source")
+        valid_sources = {c.get("source") for c in chunks}
+
+        if source not in valid_sources:
+            errors.append("Invalid citation source")
+
+    # -----------------
+    # Basic grounding
+    # -----------------
+    answer_words = set(re.findall(r"\b[a-zA-Z]{4,}\b", answer.lower()))
+    source_words = set(re.findall(r"\b[a-zA-Z]{4,}\b", combined.lower()))
+
+    if len(answer_words & source_words) < 3:
+        errors.append("Not grounded in source text")
 
     return {
         "valid": len(errors) == 0,
