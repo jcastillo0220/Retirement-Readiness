@@ -180,6 +180,10 @@ def retrieve_definition_chunks(topic: str):
         if chunk["section"].lower() == section
     ]
 
+    # ⭐ Add type metadata to each chunk
+    for chunk in matches:
+        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+
     return matches[:5] if matches else PDF_CHUNKS[:5]
 
 def retrieve_numeric_chunks(topic: str):
@@ -193,6 +197,11 @@ def retrieve_numeric_chunks(topic: str):
             chunk for chunk in FIDELITY_CHUNKS
             if chunk["section"].lower() == section
         ]
+
+        # ⭐ Add type metadata
+        for chunk in exact:
+            chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+
         if exact:
             return exact[:5]
 
@@ -201,5 +210,9 @@ def retrieve_numeric_chunks(topic: str):
     for chunk in FIDELITY_CHUNKS:
         if any(word in chunk["text"].lower() for word in topic.split()):
             results.append(chunk)
+
+    # ⭐ Add type metadata
+    for chunk in results:
+        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
 
     return results[:5] if results else FIDELITY_CHUNKS[:5]

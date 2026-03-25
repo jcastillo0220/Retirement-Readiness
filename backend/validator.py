@@ -1,5 +1,19 @@
 import json
 import re
+from extract_citation_phrases import extract_citation_phrases
+
+
+def normalize_phrase(phrase: str) -> str:
+    p = phrase.lower()
+    p = p.replace("according to", "")
+    p = p.replace("**", "")
+    return p.strip()
+
+def find_matching_chunk(normalized_phrase, retrieved_chunks):
+    for chunk in retrieved_chunks:
+        if chunk["source"].lower() in normalized_phrase:
+            return chunk
+    return None
 
 
 def parse_validation_json(raw: str):
@@ -55,44 +69,39 @@ def normalize(num):
     return num.replace("$", "").replace(",", "")
 
 
-def validate_answer(answer, citation_map, chunks):
-    errors = []
+def validate_answer(answer_text, citation_map, retrieved_chunks):
+    phrases = extract_citation_phrases(answer_text)
 
-    if not answer:
-        return {"valid": False, "errors": ["Empty answer"]}
+    if not phrases:
+        return {"valid": False, "reason": "No citations found"}
 
-    combined = " ".join(c.get("text", "") for c in chunks)
+    for phrase in phrases:
 
-    # -----------------
-    # Numbers
-    # -----------------
-    for num in extract_numbers(answer):
-        if normalize(num) not in normalize(combined):
-            errors.append(f"Number {num} not found in sources")
+        # 1. Format validation
+        if not phrase.startswith("According to"):
+            return {"valid": False, "reason": "Citation must start with 'According to'"}
 
-    # -----------------
-    # Citation check
-    # -----------------
-    if not citation_map or "main" not in citation_map:
-        errors.append("Missing citation")
+        if "(" not in phrase or ")" not in phrase:
+            return {"valid": False, "reason": "Citation must include a Markdown link"}
 
-    else:
-        source = citation_map["main"].get("source")
-        valid_sources = {c.get("source") for c in chunks}
+        # 2. Normalize
+        normalized = normalize_phrase(phrase)
 
-        if source not in valid_sources:
-            errors.append("Invalid citation source")
+        # 3. Match to retrieved chunks
+        chunk = find_matching_chunk(normalized, retrieved_chunks)
+        if not chunk:
+            return {"valid": False, "reason": "Citation refers to unknown source"}
 
-    # -----------------
-    # Basic grounding
-    # -----------------
-    answer_words = set(re.findall(r"\b[a-zA-Z]{4,}\b", answer.lower()))
-    source_words = set(re.findall(r"\b[a-zA-Z]{4,}\b", combined.lower()))
+        # 4. Type validation
+        if chunk["type"] == "pdf" and not chunk["url"].lower().endswith(".pdf"):
+            return {"valid": False, "reason": "PDF citation mismatch"}
 
-    if len(answer_words & source_words) < 3:
-        errors.append("Not grounded in source text")
+        if chunk["type"] == "web" and chunk["url"].lower().endswith(".pdf"):
+            return {"valid": False, "reason": "Web citation mismatch"}
 
-    return {
-        "valid": len(errors) == 0,
-        "errors": errors
-    }
+        # 5. Ensure consistency with citation_map
+        cited_source = citation_map.get("main", {}).get("source", "").lower()
+        if cited_source not in normalized:
+            return {"valid": False, "reason": "Citation does not match primary source"}
+
+    return {"valid": True, "reason": "All citations valid"}

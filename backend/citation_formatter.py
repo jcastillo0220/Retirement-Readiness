@@ -22,9 +22,10 @@ def format_with_citations(answer: str, retrieved_chunks: list):
 
     # 2. Citation map
     citation_map = {
-        "main": {
-            "source": source_name,
-            "url": source_url
+    "main": {
+        "source": source_name,
+        "url": source_url,
+        "type": primary.get("type")
         }
     }
 
