@@ -108,14 +108,14 @@ async def generate(req: Request):
     # 2. Build prompt
     # ---------------------------
     single_prompt = f"""
-Answer the question below in Markdown. Keep it short and simple.
+    Answer the question below in Markdown. Keep it short and simple.
 
-Question:
-\"\"\"{user_question}\"\"\"
+    Question:
+    \"\"\"{user_question}\"\"\"
 
-After the answer, output:
-{{"validation":"valid","confidence":4}}
-""".strip()
+    After the answer, output:
+    {{"validation":"valid","confidence":4}}
+    """.strip()
 
     raw = ask_ai(single_prompt)
 
@@ -196,3 +196,24 @@ After the answer, output:
     cache_set(cache_key, result)
 
     return {**result, "cached": False, "label_used": label}
+
+@app.post("/api/scenario")
+async def scenario(req: Request):
+    data = await req.json()
+
+    try:
+        projection, explanation = compute_projection(
+            age=data["age"],
+            retirement_age=data["retirement_age"],
+            annual_income=data["annual_income"],
+            current_savings=data["current_savings"],
+            monthly_contribution=data["monthly_contribution"],
+        )
+
+        return {
+            "projection": projection,
+            "explanation": explanation,
+        }
+
+    except Exception as e:
+        raise HTTPException(500, f"Scenario failed: {e}")

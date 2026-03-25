@@ -73,16 +73,16 @@ def validate_answer(answer_text, citation_map, retrieved_chunks):
     phrases = extract_citation_phrases(answer_text)
 
     if not phrases:
-        return {"valid": False, "reason": "No citations found"}
+        return {"valid": False, "errors": ["No citations found"]}
 
     for phrase in phrases:
 
         # 1. Format validation
         if not phrase.startswith("According to"):
-            return {"valid": False, "reason": "Citation must start with 'According to'"}
+            return {"valid": False, "errors": ["Citation must start with 'According to'"]}
 
         if "(" not in phrase or ")" not in phrase:
-            return {"valid": False, "reason": "Citation must include a Markdown link"}
+            return {"valid": False, "errors": ["Citation must include a Markdown link"]}
 
         # 2. Normalize
         normalized = normalize_phrase(phrase)
@@ -90,18 +90,18 @@ def validate_answer(answer_text, citation_map, retrieved_chunks):
         # 3. Match to retrieved chunks
         chunk = find_matching_chunk(normalized, retrieved_chunks)
         if not chunk:
-            return {"valid": False, "reason": "Citation refers to unknown source"}
+            return {"valid": False, "errors": ["Citation refers to unknown source"]}
 
         # 4. Type validation
         if chunk["type"] == "pdf" and not chunk["url"].lower().endswith(".pdf"):
-            return {"valid": False, "reason": "PDF citation mismatch"}
+            return {"valid": False, "errors": ["PDF citation mismatch"]}
 
         if chunk["type"] == "web" and chunk["url"].lower().endswith(".pdf"):
-            return {"valid": False, "reason": "Web citation mismatch"}
+            return {"valid": False, "errors": ["Web citation mismatch"]}
 
         # 5. Ensure consistency with citation_map
         cited_source = citation_map.get("main", {}).get("source", "").lower()
         if cited_source not in normalized:
-            return {"valid": False, "reason": "Citation does not match primary source"}
+            return {"valid": False, "errors": ["Citation does not match primary source"]}
 
-    return {"valid": True, "reason": "All citations valid"}
+    return {"valid": True, "errors": []}

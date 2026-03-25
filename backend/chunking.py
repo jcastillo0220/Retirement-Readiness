@@ -180,39 +180,47 @@ def retrieve_definition_chunks(topic: str):
         if chunk["section"].lower() == section
     ]
 
-    # ⭐ Add type metadata to each chunk
-    for chunk in matches:
-        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+    # If matches exist, use them
+    if matches:
+        for chunk in matches:
+            chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+        return matches[:5]
 
-    return matches[:5] if matches else PDF_CHUNKS[:5]
+    # Otherwise fallback to first 5 PDF chunks
+    fallback = PDF_CHUNKS[:5]
+    for chunk in fallback:
+        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+    return fallback
 
 def retrieve_numeric_chunks(topic: str):
     topic = topic.lower()
 
     section = TOPIC_MAP.get(topic)
 
-    # Exact section match first
+    # Exact match
     if section:
         exact = [
             chunk for chunk in FIDELITY_CHUNKS
             if chunk["section"].lower() == section
         ]
-
-        # ⭐ Add type metadata
-        for chunk in exact:
-            chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
-
         if exact:
+            for chunk in exact:
+                chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
             return exact[:5]
 
-    # Fallback keyword match
+    # Keyword fallback
     results = []
     for chunk in FIDELITY_CHUNKS:
         if any(word in chunk["text"].lower() for word in topic.split()):
             results.append(chunk)
 
-    # ⭐ Add type metadata
-    for chunk in results:
-        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+    if results:
+        for chunk in results:
+            chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+        return results[:5]
 
-    return results[:5] if results else FIDELITY_CHUNKS[:5]
+    # Final fallback
+    fallback = FIDELITY_CHUNKS[:5]
+    for chunk in fallback:
+        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
+    return fallback
