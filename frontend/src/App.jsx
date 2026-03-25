@@ -32,6 +32,7 @@ export default function AIChat() {
     originalAnswer,
     error,
     history,
+    supported_phrases,
     handleAsk,
     handleScenario,
   } = useAIChat();
@@ -98,7 +99,7 @@ const topic_buttons = [
             answer={answer}
             validated={validated}
             originalAnswer={originalAnswer}
-            projection={history[history.length - 1]?.projection}
+            supported_phrases={supported_phrases}
             bubbleStyle={bubbleStyle}
             validatedPill={validatedPill}
             correctedPill={correctedPill}

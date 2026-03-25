@@ -1,24 +1,36 @@
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 export default function AnswerBubble({
   answer,
   validated,
   originalAnswer,
-  projection,
+  supported_phrases = [],
   bubbleStyle,
   validatedPill,
   correctedPill
 }) {
+  const supported = supported_phrases || [];
+
   return (
     <div style={bubbleStyle}>
-      {projection && (
-        <pre style={{ background: "#0f184d", padding: 10 }}>
-          {JSON.stringify(projection, null, 2)}
-        </pre>
-      )}
-
+      {/* Render Answer */}
       <ReactMarkdown>{answer}</ReactMarkdown>
 
+      {/* Supported Phrases Dropdown */}
+      <details style={{ marginTop: 12 }}>
+        <summary style={{ cursor: "pointer", opacity: 0.85 }}>
+          Supported phrases ({supported.length})
+        </summary>
+
+        <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+          {supported.map((p, i) => (
+            <li key={i}>{p}</li>
+          ))}
+        </ul>
+      </details>
+
+      {/* Validation Pills */}
       <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
         {validated ? (
           <span style={validatedPill}>Validated</span>

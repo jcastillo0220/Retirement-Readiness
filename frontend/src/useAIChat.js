@@ -11,6 +11,7 @@ export function useAIChat() {
   const [error, setError] = useState(null);
   const [labelPrompt, setLabelPrompt] = useState(null);
   const [history, setHistory] = useState([]);
+  const [supported_phrases, setSupportedPhrases] = useState([]);
 
   const requestIdRef = useRef(0);
 
@@ -47,6 +48,7 @@ export function useAIChat() {
       setValidated(isValid);
       setOriginalAnswer(orig);
       setLabelPrompt(res?.label_prompt || null);
+      setSupportedPhrases(res?.supported_phrases || []);
 
       setHistory((prev) => [
         ...prev,
@@ -60,6 +62,7 @@ export function useAIChat() {
           originalAnswer: orig,
           timestamp: Date.now(),
           cached: !!res?.cached,
+          supported_phrases: res?.supported_phrases || [],
         },
       ]);
     } catch (err) {
@@ -126,6 +129,7 @@ export function useAIChat() {
     error,
     labelPrompt,
     history,
+    supported_phrases,
     handleAsk,
     handleScenario,
   };

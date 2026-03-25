@@ -13,6 +13,7 @@ from scenario_engine import compute_projection
 
 from chunking import retrieve_definition_chunks, retrieve_numeric_chunks
 from citation_formatter import format_with_citations
+from grounding_verifier import verify_answer_grounding
 
 logging.basicConfig(
     level=logging.INFO,
@@ -103,6 +104,15 @@ async def generate(req: Request):
 
     if not retrieved_chunks:
         raise HTTPException(500, "No chunks retrieved.")
+        logging.info("Retrieved Chunks:")
+
+    for i, chunk in enumerate(retrieved_chunks, start=1):
+        logging.info(
+            f"\n--- Chunk {i} ---\n"
+            f"ID: {chunk.get('id')}\n"
+            f"url: {chunk.get('url')}\n"
+            f"Text:\n{chunk.get('text')}\n"
+        )
 
     # ---------------------------
     # 2. Build prompt
@@ -183,6 +193,15 @@ async def generate(req: Request):
     # 4. Suggestions + return
     # ---------------------------
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
+    grounding_report = verify_answer_grounding(final_answer, retrieved_chunks)
+
+    print("CHUNKS:", [c["text"][:200] for c in retrieved_chunks])
+    print("GROUNDING REPORT:", grounding_report)
+
+    supported_phrases = [
+    g["phrase"] for g in grounding_report if g["supported"]
+    ]
+
 
     result = {
         "answer": final_answer,
@@ -191,6 +210,7 @@ async def generate(req: Request):
         "suggestions": suggestions,
         "original_answer": original_answer if not validated else None,
         "validation_errors": last_errors if not validated else [],
+        "supported_phrases": supported_phrases,
     }
 
     cache_set(cache_key, result)
