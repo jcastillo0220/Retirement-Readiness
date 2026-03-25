@@ -2,51 +2,53 @@ def format_with_citations(answer: str, retrieved_chunks: list):
     if not retrieved_chunks:
         return answer, {}
 
+    # Primary source = first retrieved chunk
     primary = retrieved_chunks[0]
+
     source_name = primary["source"]
     source_url = primary["url"]
+    source_type = primary.get("type")  # "pdf" or "web"
 
-    is_pdf = False
-    if "Northwestern" in source_name:
-        source_name = "Northwestern Mutual"
+    # Detect PDF dynamically
+    is_pdf = source_type == "pdf"
+
+    # If it's a PDF, rewrite the URL to your FastAPI PDF endpoint
+    if is_pdf:
         source_url = "http://localhost:8000/pdf/retirement-overview"
-        is_pdf = True
 
-    # 1. Top line
+    # 1. Add top-line citation for PDFs only
     if is_pdf:
         top_line = f"According to [{source_name}]({source_url}),"
-        # Add required blank line for Markdown
         cited_answer = f"{top_line}\n\n{answer.lstrip()}"
     else:
         cited_answer = answer
 
-    # 2. Citation map
+    # 2. Build citation map for validator
     citation_map = {
-    "main": {
-        "source": source_name,
-        "url": source_url,
-        "type": primary.get("type")
+        "main": {
+            "source": source_name,
+            "url": source_url,
+            "type": source_type
         }
     }
 
-    # 3. Sources section
+    # 3. Build Sources section dynamically
     unique_urls = set()
     for chunk in retrieved_chunks:
-        if "Northwestern" in chunk["source"]:
+        if chunk["type"] == "pdf":
             unique_urls.add("http://localhost:8000/pdf/retirement-overview")
         else:
             unique_urls.add(chunk["url"])
 
     sources_lines = []
     for u in unique_urls:
-        if "pdf" in u:
+        if u.endswith(".pdf") or "pdf" in u:
             sources_lines.append(f"- {u} (downloads PDF)")
         else:
             sources_lines.append(f"- {u}")
 
     sources_block = "\nSource:\n" + "\n".join(sources_lines)
 
-    # Add blank line before sources block
     cited_answer += f"\n\n{sources_block}"
 
     return cited_answer, citation_map
