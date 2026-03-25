@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +26,8 @@ if not API_KEY:
     raise RuntimeError("Missing GOOGLE_API_KEY in .env")
 
 MODEL_NAME = (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash").strip()
+MAX_REPAIR_ATTEMPTS = 3
+
 client = genai.Client(api_key=API_KEY)
 
 app = FastAPI()
@@ -54,11 +55,7 @@ def health():
 
 def is_definition_question(q: str) -> bool:
     q = q.lower()
-    definition_keywords = [
-        "what is", "explain", "define", "definition", "meaning of"
-    ]
-    return any(k in q for k in definition_keywords)
-
+    return any(k in q for k in ["what is", "define", "explain", "meaning"])
 
 @app.get("/pdf/retirement-overview")
 async def get_pdf():
@@ -67,30 +64,14 @@ async def get_pdf():
     if not os.path.exists(pdf_path):
         raise HTTPException(status_code=404, detail="PDF file not found.")
 
-    return FileResponse(
-        pdf_path,
-        media_type="application/pdf",
-        filename="Retirement Plan Overview.pdf"
-    )
-
+    return FileResponse(pdf_path, media_type="application/pdf")
 
 @app.post("/api/ai/generate")
 async def generate(req: Request):
     data = await req.json()
 
     user_question = (data.get("question") or "").strip()
-
-    # Accept both camelCase and snake_case from frontend
-    topic_key = (
-        data.get("topicKey") or
-        data.get("topic_key") or
-        "definitions"   # fallback for suggested buttons
-    )
-
-    # Safety fallback
-    if not topic_key:
-        topic_key = "definitions"
-
+    topic_key = data.get("topicKey") or data.get("topic_key") or "definitions"
     label = data.get("label")
 
     if not user_question:
@@ -101,120 +82,106 @@ async def generate(req: Request):
     if cached:
         return {**cached, "cached": True, "label_used": label}
 
-    # ---------------------------------------------------------
-    # 1. Retrieve chunks (PDF for definitions, Fidelity for rules)
-    # ---------------------------------------------------------
+    # ---------------------------
+    # 1. Retrieve chunks
+    # ---------------------------
     if is_definition_question(user_question):
         retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:
         retrieved_chunks = retrieve_numeric_chunks(topic_key)
 
     if not retrieved_chunks:
-        raise HTTPException(500, "No chunks retrieved — check chunking pipeline.")
+        raise HTTPException(500, "No chunks retrieved.")
 
-    logging.info("Retrieved Chunks:")
-    for i, chunk in enumerate(retrieved_chunks, start=1):
-        logging.info(
-            f"\n--- Chunk {i} ---\n"
-            f"ID: {chunk.get('id')}\n"
-            f"url: {chunk.get('url')}\n"
-            f"Text:\n{chunk.get('text')}\n"
-        )
-
-    # ---------------------------------------------------------
-    # 2. Build main prompt
-    # ---------------------------------------------------------
+    # ---------------------------
+    # 2. Build prompt
+    # ---------------------------
     single_prompt = f"""
-    Answer the question below in Markdown. Keep the explanation short and use simple language.
-    Do not include examples.
+Answer the question below in Markdown. Keep it short and simple.
 
-    Question:
-    \"\"\"{user_question}\"\"\"
+Question:
+\"\"\"{user_question}\"\"\"
 
-    After the Markdown answer, on a new line output a JSON object EXACTLY in this format:
-    {{"validation":"valid"|"invalid"|"uncertain","confidence":1}}
-
-    - validation must be one of: valid, invalid, uncertain
-    - confidence is an integer 1-5
-    - Do not output any other JSON or text on the same line as the JSON object.
-    """.strip()
+After the answer, output:
+{{"validation":"valid","confidence":4}}
+""".strip()
 
     raw = ask_ai(single_prompt)
 
-    # ---------------------------------------------------------
-    # 3. Parse JSON token
-    # ---------------------------------------------------------
-    answer_text, meta = parse_validation_json(raw)
-
-    validated = True
+    # ---------------------------
+    # 3. REPAIR LOOP ✅
+    # ---------------------------
+    validated = False
     original_answer = None
+    final_answer = ""
+    final_confidence = None
+    last_errors = []
 
-    # ---------------------------------------------------------
-    # 4. Self-validation repair
-    # ---------------------------------------------------------
-    if meta["validation"] in ["invalid", "uncertain"]:
-        validated = False
-        original_answer = answer_text
-        repair_prompt = build_repair_prompt(original_answer, user_question)
-        repaired_raw = ask_ai(repair_prompt)
-        repaired_answer, _ = parse_validation_json(repaired_raw)
-        final_answer = repaired_answer
-    else:
-        final_answer = answer_text
+    current_raw = raw
 
-    # ---------------------------------------------------------
-    # 5. Add citations
-    # ---------------------------------------------------------
-    answer_with_citations, citation_map = format_with_citations(
-        final_answer,
-        retrieved_chunks
-    )
+    for attempt in range(1, MAX_REPAIR_ATTEMPTS + 1):
+        logging.info(f"Attempt {attempt}")
 
-    # ---------------------------------------------------------
-    # 6. External validator
-    # ---------------------------------------------------------
-    validation = validate_answer(
-        answer_with_citations,
-        citation_map,
-        retrieved_chunks
-    )
+        answer_text, meta = parse_validation_json(current_raw)
+        final_confidence = meta.get("confidence")
 
-    # ---------------------------------------------------------
-    # 7. External repair if needed
-    # ---------------------------------------------------------
-    if not validation["valid"]:
-        validated = False
-        original_answer = final_answer
+        if original_answer is None:
+            original_answer = answer_text
 
-        repair_prompt = build_repair_prompt(final_answer, user_question)
-        repaired_raw = ask_ai(repair_prompt)
-        repaired_answer, _ = parse_validation_json(repaired_raw)
+        model_bad = meta.get("validation") in ["invalid", "uncertain"]
 
-        answer_with_citations, _ = format_with_citations(
-            repaired_answer,
+        answer_with_citations, citation_map = format_with_citations(
+            answer_text,
             retrieved_chunks
         )
 
-        final_answer = answer_with_citations
-    else:
+        validation = validate_answer(
+            answer_with_citations,
+            citation_map,
+            retrieved_chunks
+        )
+
+        if not model_bad and validation["valid"]:
+            validated = True
+            final_answer = answer_with_citations
+            break
+
+        repair_reasons = []
+
+        if model_bad:
+            repair_reasons.append("Model flagged answer as invalid/uncertain")
+
+        if not validation["valid"]:
+            repair_reasons.extend(validation["errors"])
+
+        last_errors = repair_reasons
         final_answer = answer_with_citations
 
-    # ---------------------------------------------------------
-    # 8. Suggestions
-    # ---------------------------------------------------------
+        if attempt == MAX_REPAIR_ATTEMPTS:
+            break
+
+        repair_prompt = build_repair_prompt(
+            answer_text,
+            user_question,
+            repair_reasons
+        )
+
+        current_raw = ask_ai(repair_prompt)
+
+    # ---------------------------
+    # 4. Suggestions + return
+    # ---------------------------
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
 
-    cache_value = {
+    result = {
         "answer": final_answer,
         "validated": validated,
-        "confidence": meta["confidence"],
+        "confidence": final_confidence,
         "suggestions": suggestions,
-        "original_answer": original_answer,
+        "original_answer": original_answer if not validated else None,
+        "validation_errors": last_errors if not validated else [],
     }
-    cache_set(cache_key, cache_value)
 
-    return {
-        **cache_value,
-        "cached": False,
-        "label_used": label,
-    }
+    cache_set(cache_key, result)
+
+    return {**result, "cached": False, "label_used": label}
