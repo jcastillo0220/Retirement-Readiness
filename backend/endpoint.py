@@ -20,11 +20,9 @@ logging.basicConfig(
     format="%(levelname)s: %(message)s"
 )
 
-load_dotenv()
-
-API_KEY = (os.getenv("GOOGLE_API_KEY") or "").strip()
+API_KEY = input("Enter your Google API key: ").strip()
 if not API_KEY:
-    raise RuntimeError("Missing GOOGLE_API_KEY in .env")
+    raise RuntimeError("You must enter an API key.")
 
 MODEL_NAME = (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash").strip()
 MAX_REPAIR_ATTEMPTS = 3
