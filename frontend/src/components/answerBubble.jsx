@@ -24,8 +24,14 @@ export default function AnswerBubble({
         </summary>
 
         <ul style={{ marginTop: 8, paddingLeft: 20 }}>
-          {supported.map((p, i) => (
-            <li key={i}>{p}</li>
+          {supported.map((item, i) => (
+            <li key={i} style={{ marginBottom: 8 }}>
+              <strong>{item.phrase}</strong>
+              <div style={{ fontSize: "0.85em", color: "#666", marginTop: 4 }}>
+                <div>Chunk ID: {item.chunk_id}</div>
+                <div>{item.chunk_text}</div>
+              </div>
+            </li>
           ))}
         </ul>
       </details>
