@@ -193,13 +193,17 @@ async def generate(req: Request):
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
     grounding_report = verify_answer_grounding(final_answer, retrieved_chunks)
 
-    print("CHUNKS:", [c["text"][:200] for c in retrieved_chunks])
     print("GROUNDING REPORT:", grounding_report)
 
     supported_phrases = [
-    g["phrase"] for g in grounding_report if g["supported"]
+        {
+            "phrase": g["phrase"],
+            "chunk_id": g["chunk"]["id"],
+            "chunk_text": g["chunk"]["text"]
+        }
+        for g in grounding_report
+        if g["supported"] and g["chunk"] is not None
     ]
-
 
     result = {
         "answer": final_answer,

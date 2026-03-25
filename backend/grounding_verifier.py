@@ -10,15 +10,18 @@ def extract_key_phrases(answer: str):
 def phrase_supported_by_chunks(phrase: str, chunks: list, min_overlap=0.6):
     phrase_words = phrase.lower().split()
     if len(phrase_words) < 2:
-        return False
+        return None
 
     for chunk in chunks:
         text = chunk["text"].lower()
         overlap = sum(1 for w in phrase_words if w in text) / len(phrase_words)
         if overlap >= min_overlap:
-            return True
+            return {
+                "id": chunk.get("id"),
+                "text": chunk.get("text")
+            }
 
-    return False
+    return None
 
 
 def verify_answer_grounding(answer: str, chunks: list):
@@ -26,10 +29,12 @@ def verify_answer_grounding(answer: str, chunks: list):
     report = []
 
     for phrase in phrases:
-        supported = phrase_supported_by_chunks(phrase, chunks)
+        supporting = phrase_supported_by_chunks(phrase, chunks)
+
         report.append({
             "phrase": phrase,
-            "supported": supported
+            "supported": supporting is not None,
+            "chunk": supporting  # either {id, text} or None
         })
 
     return report
