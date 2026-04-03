@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
  
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
@@ -47,9 +47,7 @@ MODEL_NAME = (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash").strip()
 MAX_REPAIR_ATTEMPTS = 3
 MAX_Q_LEN = 500
  
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel(MODEL_NAME)
- 
+client = genai.Client(api_key=API_KEY)
  
 # ============================
 # FASTAPI LIFESPAN
@@ -83,7 +81,15 @@ app.add_middleware(
 # ============================
 def ask_ai(prompt: str) -> str:
     try:
-        resp = model.generate_content(prompt)
+        resp = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                {
+                    "role": "user",
+                    "parts": [{"text": prompt}]
+                }
+            ]
+        )
         text = getattr(resp, "text", "") or ""
         return text.strip()
     except Exception as e:
