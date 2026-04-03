@@ -5,24 +5,57 @@ export default function HistoryList({
   bubbleStyle,
   validatedPill,
   correctedPill,
-  selectedQuestionStyle
+  selectedQuestionStyle,
 }) {
   return (
     <div style={{ marginTop: 6, width: "100%" }}>
       {history.map((item) => (
         <div key={item.id} style={{ marginBottom: 14 }}>
-          <div style={{ ...selectedQuestionStyle, marginTop: 6 }}>{item.label}</div>
+          <div style={{ ...selectedQuestionStyle, marginTop: 6 }}>
+            {item.label}
+          </div>
 
           <div style={{ ...bubbleStyle, marginTop: 10 }}>
             {item.projection && (
-              <pre style={{ background: "#f7f7f7", padding: 10 }}>
-                {JSON.stringify(item.projection, null, 2)}
-              </pre>
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  marginBottom: 10,
+                  border: "1px solid rgba(255,255,255,0.10)",
+                }}
+              >
+                {Object.entries(item.projection).map(([k, v]) => (
+                  <div
+                    key={k}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span style={{ opacity: 0.7, textTransform: "capitalize" }}>
+                      {k.replace(/_/g, " ")}
+                    </span>
+                    <span>{String(v)}</span>
+                  </div>
+                ))}
+              </div>
             )}
 
             <ReactMarkdown>{item.answer}</ReactMarkdown>
 
-            <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
+            <div
+              style={{
+                marginTop: 10,
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
               {item.validated ? (
                 <span style={validatedPill}>Validated</span>
               ) : (

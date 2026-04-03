@@ -13,6 +13,7 @@ export default function ScenarioForm({ onSubmit, loading }) {
 
   const [age, setAge] = useState("");
   const [retirementAge, setRetirementAge] = useState("");
+  const [income, setIncome] = useState("");
   const [savings, setSavings] = useState("");
   const [contrib, setContrib] = useState("");
   const [error, setError] = useState("");
@@ -47,10 +48,12 @@ export default function ScenarioForm({ onSubmit, loading }) {
     if (
       !age ||
       !retirementAge ||
+      !income ||
       !savings ||
       !contrib ||
       Number(age) === 0 ||
       Number(retirementAge) === 0 ||
+      Number(income) === 0 ||
       Number(savings) === 0 ||
       Number(contrib) === 0
     ) {
@@ -72,6 +75,7 @@ export default function ScenarioForm({ onSubmit, loading }) {
     onSubmit({
       age: clean(age),
       retirement_age: clean(retirementAge),
+      annual_income: clean(income),
       current_savings: clean(savings),
       monthly_contribution: clean(contrib),
     });
@@ -79,7 +83,6 @@ export default function ScenarioForm({ onSubmit, loading }) {
 
   return (
     <div style={scenarioCardStyle}>
-      {/* Dropdown Header */}
       <div style={dropdownHeaderStyle} onClick={() => setOpen(!open)}>
         <span>Personalized Scenario: Compound Interest</span>
         <span
@@ -92,7 +95,6 @@ export default function ScenarioForm({ onSubmit, loading }) {
         </span>
       </div>
 
-      {/* Dropdown Body */}
       <div style={dropdownBodyStyle(open)}>
         <div style={{ marginBottom: 10 }}>
           <div style={scenarioLabelStyle}>Age</div>
@@ -123,6 +125,17 @@ export default function ScenarioForm({ onSubmit, loading }) {
           onChange={(e) => {
             const v = e.target.value;
             if (/^\d*$/.test(v)) setRetirementAge(v);
+          }}
+        />
+
+        <div style={scenarioLabelStyle}>Annual Income</div>
+        <input
+          style={scenarioInputStyle}
+          placeholder="e.g., 65,000"
+          value={formatCurrency(income)}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[^0-9.]/g, "");
+            if (/^\d*\.?\d*$/.test(raw)) setIncome(raw);
           }}
         />
 

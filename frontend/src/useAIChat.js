@@ -2,9 +2,7 @@ import { useState, useRef } from "react";
 import { askAI, runScenario } from "./api";
 
 export function useAIChat() {
-  const [citation, setCitation] = useState("");
   const [answer, setAnswer] = useState("");
-  const [sources, setSources] = useState("");
   const [suggestedButtons, setSuggestedButtons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
@@ -14,18 +12,19 @@ export function useAIChat() {
   const [labelPrompt, setLabelPrompt] = useState(null);
   const [history, setHistory] = useState([]);
   const [supported_phrases, setSupportedPhrases] = useState([]);
+  const [activeTopicKey, setActiveTopicKey] = useState("definitions");
 
   const requestIdRef = useRef(0);
 
-  // UPDATED SIGNATURE: (prompt, topicKey, label)
   async function handleAsk(prompt, topicKey, label) {
     const id = ++requestIdRef.current;
 
-    const finalPrompt = prompt;               // AI receives full prompt
+    const finalPrompt = prompt;
     const finalTopicKey = topicKey || "definitions";
-    const questionLabel = label;              // UI shows short label ONLY
+    const questionLabel = label || prompt;
 
-    setSelectedQuestion(questionLabel || "");       
+    setSelectedQuestion(questionLabel);
+    setActiveTopicKey(finalTopicKey);
     setValidated(true);
     setOriginalAnswer(null);
     setError(null);
@@ -35,7 +34,7 @@ export function useAIChat() {
       const res = await askAI({
         question: finalPrompt,
         topicKey: finalTopicKey,
-        label: questionLabel
+        label: questionLabel,
       });
 
       if (id !== requestIdRef.current) return;
@@ -45,9 +44,7 @@ export function useAIChat() {
       const isValid = res?.validated ?? true;
       const orig = res?.original_answer ?? null;
 
-      setCitation(res?.citation || "");
       setAnswer(finalAnswer);
-      setSources(res?.sources || "");
       setSuggestedButtons(suggestions);
       setValidated(isValid);
       setOriginalAnswer(orig);
@@ -62,8 +59,6 @@ export function useAIChat() {
           prompt: finalPrompt,
           topicKey: finalTopicKey,
           answer: finalAnswer,
-          citation: res?.citation || "",
-          sources: res?.sources || "",
           validated: isValid,
           originalAnswer: orig,
           timestamp: Date.now(),
@@ -72,7 +67,9 @@ export function useAIChat() {
         },
       ]);
     } catch (err) {
-      if (id === requestIdRef.current) setError("Something went wrong.");
+      if (id === requestIdRef.current) {
+        setError(err?.message || "Something went wrong.");
+      }
     } finally {
       if (id === requestIdRef.current) setLoading(false);
     }
@@ -82,8 +79,12 @@ export function useAIChat() {
     const id = ++requestIdRef.current;
 
     setSelectedQuestion("Personalized Scenario");
+    setActiveTopicKey("scenario");
     setLoading(true);
     setError(null);
+    setSuggestedButtons([]);
+    setOriginalAnswer(null);
+    setValidated(true);
 
     try {
       const res = await runScenario({
@@ -92,16 +93,18 @@ export function useAIChat() {
         annual_income: Number(inputs.annual_income),
         current_savings: Number(inputs.current_savings),
         monthly_contribution: Number(inputs.monthly_contribution),
+        return_rate:
+          inputs.return_rate !== undefined
+            ? Number(inputs.return_rate)
+            : undefined,
       });
 
       if (id !== requestIdRef.current) return;
 
       const { projection, explanation } = res;
 
-      setAnswer(explanation);
-      setSuggestedButtons([]);
-      setValidated(true);
-      setOriginalAnswer(null);
+      setAnswer(explanation || "");
+      setSupportedPhrases([]);
 
       setHistory((prev) => [
         ...prev,
@@ -110,7 +113,7 @@ export function useAIChat() {
           label: "Personalized Scenario",
           prompt: JSON.stringify(inputs),
           topicKey: "scenario",
-          answer: explanation,
+          answer: explanation || "",
           validated: true,
           originalAnswer: null,
           timestamp: Date.now(),
@@ -119,7 +122,9 @@ export function useAIChat() {
         },
       ]);
     } catch (err) {
-      if (id === requestIdRef.current) setError("Scenario failed.");
+      if (id === requestIdRef.current) {
+        setError(err?.message || "Scenario failed.");
+      }
     } finally {
       if (id === requestIdRef.current) setLoading(false);
     }
@@ -127,8 +132,6 @@ export function useAIChat() {
 
   return {
     answer,
-    citation,
-    sources,
     suggestedButtons,
     loading,
     selectedQuestion,
@@ -138,6 +141,7 @@ export function useAIChat() {
     labelPrompt,
     history,
     supported_phrases,
+    activeTopicKey,
     handleAsk,
     handleScenario,
   };

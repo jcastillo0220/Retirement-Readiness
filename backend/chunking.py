@@ -1,17 +1,21 @@
 import re
+from pathlib import Path
+
 import requests
 from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
 
+
 TOPIC_MAP = {
-    # Definitions (PDF)
+    # Definition-like topics
+    "definitions": "definitions",
     "roth_ira_definition": "definitions",
     "401k_definition": "definitions",
     "ira_definition": "definitions",
     "rollover_ira_definition": "definitions",
     "roth_401k_definition": "definitions",
 
-    # Numeric rules (Fidelity)
+    # Numeric / rules topics
     "roth_ira": "roth_ira",
     "traditional_ira": "traditional_ira",
     "401k": "401k",
@@ -20,12 +24,20 @@ TOPIC_MAP = {
     "compound_interest": "compound_interest",
 }
 
+
+BASE_DIR = Path(__file__).resolve().parent
+PDF_PATH = BASE_DIR.parent / "docs" / "data_sources" / "Retirement Plan Overview.pdf"
+
+
 # ============================================================
 # 1. GENERIC CHUNKING FUNCTIONS
 # ============================================================
 
 def chunk_text(text: str, source: str, section: str, url: str, max_words: int = 200):
-    words = text.split()
+    words = (text or "").split()
+    if not words:
+        return []
+
     chunks = []
     current = []
 
@@ -45,7 +57,7 @@ def chunk_text(text: str, source: str, section: str, url: str, max_words: int = 
             "source": source,
             "section": section,
             "url": url,
-            "text": chunk
+            "text": chunk,
         })
 
     return result
@@ -104,31 +116,35 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 
 def chunk_pdf(pdf_path: str, source: str, section: str, max_words: int = 200):
     text = extract_text_from_pdf(pdf_path)
-    return chunk_text(text, source, section, f"file://{pdf_path}", max_words=max_words)
+    return chunk_text(text, source, section, str(Path(pdf_path).resolve()), max_words=max_words)
 
 
 # ============================================================
 # 4. SEPARATE CHUNK LISTS
 # ============================================================
 
-PDF_CHUNKS = []          # definitions
-FIDELITY_CHUNKS = []     # numeric rules
+PDF_CHUNKS = []
+FIDELITY_CHUNKS = []
 
 
 def load_all_chunks():
     global PDF_CHUNKS, FIDELITY_CHUNKS
+
+    # Reset first so repeated startup calls don't duplicate data
+    PDF_CHUNKS = []
+    FIDELITY_CHUNKS = []
 
     # -------------------------------
     # LOAD PDF DEFINITIONS
     # -------------------------------
     try:
         pdf_chunks = chunk_pdf(
-            pdf_path="../docs/data_sources/Retirement Plan Overview.pdf",
+            pdf_path=str(PDF_PATH),
             source="Northwestern Mutual",
             section="definitions",
-            max_words=200
+            max_words=200,
         )
-        PDF_CHUNKS += pdf_chunks
+        PDF_CHUNKS.extend(pdf_chunks)
         print(f"Loaded {len(pdf_chunks)} PDF definition chunks.")
     except Exception as e:
         print(f"Failed to load PDF: {e}")
@@ -142,7 +158,7 @@ def load_all_chunks():
         "401k": "https://www.fidelity.com/learning-center/smart-money/what-is-a-401k",
         "rollover_ira": "https://www.fidelity.com/retirement-ira/401k-rollover-ira",
         "roth_401k": "https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k",
-        "compound_interest": "https://www.fidelity.com/learning-center/trading-investing/compound-interest"
+        "compound_interest": "https://www.fidelity.com/learning-center/trading-investing/compound-interest",
     }
 
     for section, url in fidelity_urls.items():
@@ -151,76 +167,76 @@ def load_all_chunks():
                 url=url,
                 source="Fidelity",
                 section=section,
-                max_words=200
+                max_words=200,
             )
-            FIDELITY_CHUNKS += chunks
+            FIDELITY_CHUNKS.extend(chunks)
             print(f"Loaded {len(chunks)} Fidelity chunks from {url}")
         except Exception as e:
             print(f"Failed to scrape Fidelity URL {url}: {e}")
 
 
-# Load chunks at import time
-try:
-    load_all_chunks()
-except Exception as e:
-    print(f"Warning: failed to load chunks: {e}")
+# ============================================================
+# 5. HELPERS
+# ============================================================
+
+def _with_type(chunk: dict) -> dict:
+    copied = dict(chunk)
+    url = (copied.get("url") or "").lower()
+    copied["type"] = "pdf" if url.endswith(".pdf") else "web"
+    return copied
+
+
+def _keyword_score(text: str, topic: str) -> int:
+    text_l = (text or "").lower()
+    topic_words = [w for w in re.findall(r"[a-zA-Z0-9]+", topic.lower()) if len(w) > 2]
+    return sum(1 for w in topic_words if w in text_l)
 
 
 # ============================================================
-# 5. RETRIEVAL FUNCTIONS
+# 6. RETRIEVAL FUNCTIONS
 # ============================================================
 
 def retrieve_definition_chunks(topic: str):
-    topic = topic.lower()
-
+    topic = (topic or "definitions").lower()
     section = TOPIC_MAP.get(topic, "definitions")
 
     matches = [
         chunk for chunk in PDF_CHUNKS
-        if chunk["section"].lower() == section
+        if chunk.get("section", "").lower() == section
     ]
 
-    # If matches exist, use them
     if matches:
-        for chunk in matches:
-            chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
-        return matches[:5]
+        return [_with_type(chunk) for chunk in matches[:5]]
 
-    # Otherwise fallback to first 5 PDF chunks
     fallback = PDF_CHUNKS[:5]
-    for chunk in fallback:
-        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
-    return fallback
+    return [_with_type(chunk) for chunk in fallback]
+
 
 def retrieve_numeric_chunks(topic: str):
-    topic = topic.lower()
-
+    topic = (topic or "").lower()
     section = TOPIC_MAP.get(topic)
 
-    # Exact match
+    # 1. Exact section match
     if section:
         exact = [
             chunk for chunk in FIDELITY_CHUNKS
-            if chunk["section"].lower() == section
+            if chunk.get("section", "").lower() == section
         ]
         if exact:
-            for chunk in exact:
-                chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
-            return exact[:5]
+            return [_with_type(chunk) for chunk in exact[:5]]
 
-    # Keyword fallback
-    results = []
+    # 2. Keyword-scored fallback
+    scored = []
     for chunk in FIDELITY_CHUNKS:
-        if any(word in chunk["text"].lower() for word in topic.split()):
-            results.append(chunk)
+        score = _keyword_score(chunk.get("text", ""), topic)
+        if score > 0:
+            scored.append((score, chunk))
 
-    if results:
-        for chunk in results:
-            chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
-        return results[:5]
+    if scored:
+        scored.sort(key=lambda x: x[0], reverse=True)
+        top_chunks = [chunk for _, chunk in scored[:5]]
+        return [_with_type(chunk) for chunk in top_chunks]
 
-    # Final fallback
+    # 3. Final fallback
     fallback = FIDELITY_CHUNKS[:5]
-    for chunk in fallback:
-        chunk["type"] = "pdf" if chunk["url"].lower().endswith(".pdf") else "web"
-    return fallback
+    return [_with_type(chunk) for chunk in fallback]

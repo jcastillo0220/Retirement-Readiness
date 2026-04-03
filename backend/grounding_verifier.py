@@ -1,40 +1,60 @@
 import re
 
+
+def normalize_words(text: str):
+    return re.findall(r"[a-zA-Z0-9]+", (text or "").lower())
+
+
 def extract_key_phrases(answer: str):
-    phrases = re.findall(r"\b([A-Za-z][A-Za-z ]{3,})\b", answer)
-    stopwords = {"the","and","or","but","if","a","an","to","of","in","on","for","with"}
-    cleaned = [p.strip() for p in phrases if not all(w.lower() in stopwords for w in p.split())]
-    return cleaned
+    phrases = re.findall(r"\b([A-Za-z][A-Za-z ]{6,})\b", answer or "")
+    stopwords = {
+        "the", "and", "or", "but", "if", "a", "an", "to", "of", "in", "on",
+        "for", "with", "this", "that", "your"
+    }
+
+    cleaned = []
+    for phrase in phrases:
+        p = phrase.strip()
+        words = p.split()
+
+        if len(words) < 3:
+            continue
+
+        if all(w.lower() in stopwords for w in words):
+            continue
+
+        if p not in cleaned:
+            cleaned.append(p)
+
+    return cleaned[:20]
 
 
-def phrase_supported_by_chunks(phrase: str, chunks: list, min_overlap=0.6):
-    phrase_words = phrase.lower().split()
-    if len(phrase_words) < 2:
-        return None
+def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0.75):
+    phrase_words = set(normalize_words(phrase))
+    if not phrase_words:
+        return False
 
-    for chunk in chunks:
-        text = chunk["text"].lower()
-        overlap = sum(1 for w in phrase_words if w in text) / len(phrase_words)
+    for chunk in retrieved_chunks or []:
+        chunk_words = set(normalize_words(chunk.get("text", "")))
+        if not chunk_words:
+            continue
+
+        overlap = len(phrase_words & chunk_words) / max(len(phrase_words), 1)
         if overlap >= min_overlap:
-            return {
-                "id": chunk.get("id"),
-                "text": chunk.get("text")
-            }
+            return True
 
-    return None
+    return False
 
 
-def verify_answer_grounding(answer: str, chunks: list):
+def verify_answer_grounding(answer: str, retrieved_chunks: list):
     phrases = extract_key_phrases(answer)
     report = []
 
     for phrase in phrases:
-        supporting = phrase_supported_by_chunks(phrase, chunks)
-
-        report.append({
-            "phrase": phrase,
-            "supported": supporting is not None,
-            "chunk": supporting  # either {id, text} or None
-        })
+      supported = phrase_supported(phrase, retrieved_chunks, min_overlap=0.75)
+      report.append({
+          "phrase": phrase,
+          "supported": supported,
+      })
 
     return report
