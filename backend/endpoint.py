@@ -119,7 +119,7 @@ async def generate(req: Request):
     # ---------------------------
     print("==================================================")
     print(f"User question: {user_question}")
-    print(is_definition_question(user_question) + "\n\n")
+    print(str(is_definition_question(user_question)) + "\n\n")
     if is_definition_question(user_question):
         retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:

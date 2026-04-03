@@ -16,14 +16,22 @@ def format_with_citations(answer: str, retrieved_chunks: list):
     if is_pdf:
         source_url = "http://localhost:8000/pdf/retirement-overview"
 
-    # 1. Add top-line citation for PDFs only
+    # -----------------------------
+    # 1. Build citation_line
+    # -----------------------------
     if is_pdf:
-        top_line = f"According to [{source_name}]({source_url}),"
-        cited_answer = f"{top_line}\n\n{answer.lstrip()}"
+        citation_line = f"According to [{source_name}]({source_url}),"
     else:
-        cited_answer = answer
+        citation_line = None
 
-    # 2. Build citation map for validator
+    # -----------------------------
+    # 2. Build answer_body
+    # -----------------------------
+    answer_body = answer.strip()
+
+    # -----------------------------
+    # 3. Build citation_map
+    # -----------------------------
     citation_map = {
         "main": {
             "source": source_name,
@@ -32,7 +40,9 @@ def format_with_citations(answer: str, retrieved_chunks: list):
         }
     }
 
-    # 3. Build Sources section dynamically
+    # -----------------------------
+    # 4. Build Sources section
+    # -----------------------------
     unique_urls = set()
     for chunk in retrieved_chunks:
         if chunk["type"] == "pdf":
@@ -48,7 +58,5 @@ def format_with_citations(answer: str, retrieved_chunks: list):
             sources_lines.append(f"- {u}")
 
     sources_block = "Source:\n" + "\n".join(sources_lines)
-
-    cited_answer += f"\n\n{sources_block}"
 
     return citation_line, answer_body, sources_block, citation_map
