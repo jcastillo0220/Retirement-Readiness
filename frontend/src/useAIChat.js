@@ -3,6 +3,9 @@ import { askAI, runScenario } from "./api";
 
 export function useAIChat() {
   const [answer, setAnswer] = useState("");
+  const [citation, setCitation] = useState("");
+  const [answerBody, setAnswerBody] = useState("");
+  const [sources, setSources] = useState("");
   const [suggestedButtons, setSuggestedButtons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
@@ -45,6 +48,9 @@ export function useAIChat() {
       const orig = res?.original_answer ?? null;
 
       setAnswer(finalAnswer);
+      setCitation(res?.citation ?? "");
+      setAnswerBody(res?.answer_body ?? finalAnswer);
+      setSources(res?.sources ?? "");
       setSuggestedButtons(suggestions);
       setValidated(isValid);
       setOriginalAnswer(orig);
@@ -132,6 +138,9 @@ export function useAIChat() {
 
   return {
     answer,
+    citation,
+    answerBody,
+    sources,
     suggestedButtons,
     loading,
     selectedQuestion,

@@ -27,6 +27,9 @@ import {
 export default function AIChat() {
   const {
     answer,
+    citation,
+    answerBody,
+    sources,
     suggestedButtons,
     loading,
     selectedQuestion,
@@ -186,7 +189,9 @@ export default function AIChat() {
 
         {!loading && answer && (
           <AnswerBubble
-            answer={answer}
+            citation={citation}
+            answer={answerBody}
+            sources={sources}
             validated={validated}
             originalAnswer={originalAnswer}
             supported_phrases={supported_phrases}

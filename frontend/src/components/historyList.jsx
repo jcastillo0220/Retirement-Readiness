@@ -1,4 +1,16 @@
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+
+const linkRenderer = ({ href, children }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{ color: "#5B8CFF", textDecoration: "underline", fontWeight: 600 }}
+  >
+    {children}
+  </a>
+);
 
 export default function HistoryList({
   history,
@@ -45,7 +57,9 @@ export default function HistoryList({
               </div>
             )}
 
-            <ReactMarkdown>{item.answer}</ReactMarkdown>
+            <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{ a: linkRenderer }}>
+              {item.answer}
+            </ReactMarkdown>
 
             <div
               style={{
@@ -57,9 +71,9 @@ export default function HistoryList({
               }}
             >
               {item.validated ? (
-                <span style={validatedPill}>Validated</span>
+                <span style={validatedPill}>✓ Validated</span>
               ) : (
-                <span style={correctedPill}>Corrected</span>
+                <span style={correctedPill}>⚠ Corrected</span>
               )}
 
               {!item.validated && item.originalAnswer && (
@@ -68,7 +82,9 @@ export default function HistoryList({
                     View original answer
                   </summary>
                   <div style={{ marginTop: 8 }}>
-                    <ReactMarkdown>{item.originalAnswer}</ReactMarkdown>
+                    <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{ a: linkRenderer }}>
+                      {item.originalAnswer}
+                    </ReactMarkdown>
                   </div>
                 </details>
               )}
