@@ -85,9 +85,6 @@ def validate_answer(answer_text, citation_map, retrieved_chunks):
         if not phrase.startswith("According to"):
             return {"valid": False, "errors": ["Citation must start with 'According to'"]}
 
-        if "(" not in phrase or ")" not in phrase:
-            return {"valid": False, "errors": ["Citation must include a Markdown link"]}
-
         # 2. Normalize
         normalized = normalize_phrase(phrase)
 
