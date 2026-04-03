@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
  
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
