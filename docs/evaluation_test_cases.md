@@ -13,12 +13,6 @@
 | 9 | What is a Traditional IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Traditional IRA is a basic individual retirement account that allows for deductible and non-deductible contributions. Your investments in a Traditional IRA grow tax-deferred, meaning you don't pay taxes until you make withdrawals in retirement. | Northwestern Mutual PDF | Pass |
 | 10 | How are Traditional IRAs taxed? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | I could not find a verified source for that question, so I can’t provide a grounded answer right now. | Northwestern Mutual PDF | Fail |
 | 11 | Traditional IRA contribution rules | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | To contribute to a Traditional IRA, you must have earned income. There are annual limits on how much you can contribute, and those aged 50 and over may be able to contribute an additional catch-up amount. There is no age limit to contribute as long as you have earned income. | Northwestern Mutual PDF | Pass |
-| 12 | What are 401(k) tax rules? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 13 | How are Traditional IRAs taxed? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 14 | Traditional IRA contribution rules | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 18 | SCENARIO | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 19 | SCENARIO | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 20 | SCENARIO | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
 
 # Required metrics
 
