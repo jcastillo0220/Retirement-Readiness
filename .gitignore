@@ -1,17 +1,5 @@
-# Environment variables
 .env
-.env.*
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Virtual environment
+backend/.env
+frontend/.env
 .venv/
-venv/
-
-# Mac files
-.DS_Store
-
-# VS Code
-.vscode/
+node_modules/
