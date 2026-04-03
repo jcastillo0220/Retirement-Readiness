@@ -24,14 +24,14 @@ generator_map = {
          "prompt": "What are the contribution rules for a Traditional IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-traditional-ira"}
     ],
     "rollover_ira": [
-        {"label": "What is a Rollover IRA?", 
-         "prompt": "What is a Rollover IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-rollover-ira"},
+        {"label": "How do taxes work in a Rollover IRA?", 
+         "prompt": "How do taxes work in a Rollover IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-rollover-ira"},
         {"label": "When to use a Rollover IRA", 
          "prompt": "When should someone use a Rollover IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-rollover-ira"}
     ],
     "roth_401k": [
-        {"label": "What is a Roth 401(k)?", 
-         "prompt": "What is a Roth 401(k)?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k"},
+        {"label": "How do taxes work in a Roth 401(k)?", 
+         "prompt": "How do taxes work in a Roth 401(k)?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k"},
         {"label": "Roth 401(k) vs Roth IRA", 
          "prompt": "How is a Roth 401(k) different from a Roth IRA?, Do not include an example. Make it as short as possible and use simple language. Base your definition off from this website: https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-401k"}
     ],

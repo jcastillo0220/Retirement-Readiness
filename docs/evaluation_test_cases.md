@@ -12,12 +12,16 @@
 | 8 | What are contribution limits? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
 | 9 | Roth vs Traditional IRA | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
 | 10 | How does a 401(k) work? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 12 | What are 401(k) tax rules? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 13 | How are Traditional IRAs taxed? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 14 | Traditional IRA contribution rules | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 18 | When to use a Rollover IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 19 | What is a Roth 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
-| 20 | Roth 401(k) vs Roth IRA | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
+| 11 | What are 401(k) tax rules? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
+| 12 | How are Traditional IRAs taxed? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
+| 13 | Traditional IRA contribution rules | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | According to Northwestern Mutual... | Northwestern Mutual PDF | Pass |
+| 13 | What is a Rollover IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | I could not find a verified source for that question, so I can’t provide a grounded answer right now. | Northwestern Mutual PDF | Fail |
+| 14 | How do taxes work in a Rollover IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Rollover IRA allows your money to grow tax-deferred, meaning you won't pay taxes on its potential growth until you make withdrawals. The initial transfer of funds from a workplace account into a Rollover IRA is generally done without taxes or penalties. However, when you eventually withdraw money, it will be subject to state and federal income taxes, and withdrawals before age 59½ may also incur a 10% early withdrawal penalty. | Northwestern Mutual PDF | Pass |
+| 14 | When to use a Rollover IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Rollover IRA is typically used when you leave a job or retire. It allows you to move funds from your old workplace retirement plan into a single account, often without immediate taxes or penalties. | Northwestern Mutual PDF | Pass |
+| 15 | What is a Roth 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Roth 401(k) is an employer-sponsored retirement plan, also known as a Designated Roth Account, that allows you to contribute money after taxes. While contributions are not tax-deductible, your qualified withdrawals in retirement are entirely tax-free. | Northwestern Mutual PDF | Pass |
+| 16 | Roth 401(k) vs Roth IRA | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Roth 401(k) is an employer-sponsored retirement plan, while a Roth IRA is an individual retirement account you open on your own. Roth 401(k)s generally have higher contribution limits and no income phase-outs for contributions, which can apply to Roth IRAs. | Northwestern Mutual PDF | Pass |
+| 16 | How do taxes work in a Roth 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | With a Roth 401(k), you contribute money after it has already been taxed from your paycheck. This allows your investments to grow completely tax-free, and qualified withdrawals in retirement are also tax-free. | Northwestern Mutual PDF | Pass |
+
 
 # Required metrics
 
