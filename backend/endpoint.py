@@ -151,10 +151,14 @@ Bad Answer:
 Issues:
 {issues}
  
-Use the provided source excerpts if they are helpful. If the sources do not fully support the answer,
-you may use general financial knowledge to provide a helpful answer.
-Clearly state when any part of the answer is based on general knowledge.
+Make sure to use only the souces provided below to answer the question. 
+Do not include any information that cannot be supported by the provided sources.
  
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
+ 
+Keep the answer short, simple, easy to read for beginners, and in Markdown.
+A total answer length of 2 - 3 sentences maximum.
+
 Source Excerpts:
 {source_context}
  
@@ -172,11 +176,12 @@ def build_fallback_prompt(user_question: str) -> str:
     return f"""
 You are a retirement assistant.
  
-Answer the question clearly and simply using general financial knowledge.
-Be helpful, concise, and use Markdown.
-Because this answer is not grounded in the provided project sources, begin with this note:
+Make sure to use only the souces provided below to answer the question. 
  
-**Note:** This answer is based on general financial knowledge and not the project's loaded sources.
+Keep the answer short, simple, easy to read for beginners, and in Markdown.
+A total answer length of 2 - 3 sentences maximum.
+
+If the answer cannot be found in the sources, say "Not found in provided sources" and do not attempt to use any outside knowledge.
  
 Question:
 {user_question}
@@ -269,9 +274,9 @@ Use the provided source excerpts below to answer the question.
 Use the provided sources whenever relevant.
 Do NOT include any source markers like [source 1], [source 2], or numeric tags.
 If the sources do not fully support the answer, you may use general financial knowledge to provide a helpful answer.
-Clearly state when any part of the answer is based on general financial knowledge.
  
-Keep the answer short, simple, and in Markdown.
+Keep the answer short, simple, easy to read for beginners, and in Markdown.
+A total answer length of 2 - 3 sentences maximum.
  
 Question:
 \"\"\"{user_question}\"\"\"
