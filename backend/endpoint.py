@@ -81,6 +81,23 @@ async def get_pdf():
 
     return FileResponse(pdf_path, media_type="application/pdf")
 
+def build_refusal_response(reason: str, label=None):
+    return {
+        "answer": (
+            "I could not find a verified source for that question, "
+            "so I can’t provide a grounded answer right now."
+        ),
+        "validated": False,
+        "confidence": 0,
+        "suggestions": [],
+        "original_answer": None,
+        "validation_errors": [reason],
+        "supported_phrases": [],
+        "cached": False,
+        "label_used": label,
+        "refused": True,
+    }
+
 @app.post("/api/ai/generate")
 async def generate(req: Request):
     data = await req.json()
@@ -109,16 +126,16 @@ async def generate(req: Request):
         retrieved_chunks = retrieve_numeric_chunks(topic_key)
 
     if not retrieved_chunks:
-        raise HTTPException(500, "No chunks retrieved.")
-        logging.info("Retrieved Chunks:")
-    print("--------------------------------------------------")
-    # for i, chunk in enumerate(retrieved_chunks, start=1):
-    #    logging.info(
-    #        f"\n--- Chunk {i} ---\n"
-    #        f"ID: {chunk.get('id')}\n"
-    #        f"url: {chunk.get('url')}\n"
-    #        f"Text:\n{chunk.get('text')}\n"
-    #    )
+        logging.warning("No chunks retrieved for question: %s", user_question)
+        return build_refusal_response("No verified source retrieved", label=label)
+
+    for i, chunk in enumerate(retrieved_chunks, start=1):
+        logging.info(
+            f"\n--- Chunk {i} ---\n"
+            f"ID: {chunk.get('id')}\n"
+            f"url: {chunk.get('url')}\n"
+            f"Text:\n{chunk.get('text')}\n"
+        )
 
     # ---------------------------
     # 2. Build prompt
@@ -195,7 +212,24 @@ async def generate(req: Request):
                 repair_reasons
             )
 
-            raw_answer = ask_ai(repair_prompt)
+        if attempt == MAX_REPAIR_ATTEMPTS:
+            break
+
+        repair_prompt = build_repair_prompt(
+            answer_text,
+            user_question,
+            repair_reasons
+        )
+
+        current_raw = ask_ai(repair_prompt)
+        
+        if not validated:
+            logging.warning("Answer failed validation after all repair attempts: %s", last_errors)
+            return build_refusal_response(
+                "Answer could not be grounded after validation: " + "; ".join(last_errors),
+                label=label
+  )
+    
 
     # ---------------------------
     # 4. Suggestions + return
