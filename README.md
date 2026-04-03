@@ -1,9 +1,9 @@
-# 🚀 Retirement Readiness
+# Retirement Readiness
 Our venture helps prepare individuals who are on a path to retirement and want to be educated in various retirement plans. 
 
 ---
 
-## 👥 Team Members & Roles
+## Team Members & Roles
 - **Javier Castillo** — Project Lead
 - **Joaquin Castillo** — AI Dev
 - **Abcde Mireles** — UI Designer
@@ -15,7 +15,7 @@ Our venture helps prepare individuals who are on a path to retirement and want t
 [**Spike Plan**](https://github.com/jcastillo0220/Retirement-Readiness/blob/main/docs/Spike%20Plan.pdf)<br>
 [**Pitch Deck**](https://github.com/jcastillo0220/Retirement-Readiness/blob/bbb02bedf890d70adcc42897e60de980f2cbb1ea/docs/Pitch%20Deck.pdf)<br>
 
-## 🛠️ How to Run the Project in VS Code 
+## How to Run the Project in VS Code 
 ### Backend
 1. Navigate to the backend folder:
    ```bash
