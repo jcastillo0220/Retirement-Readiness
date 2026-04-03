@@ -1,8 +1,12 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import { citationBlock, citationLink } from "../styles";
 
 export default function AnswerBubble({
+  citation,
   answer,
+  sources,
   validated,
   originalAnswer,
   supported_phrases = [],
@@ -14,8 +18,35 @@ export default function AnswerBubble({
 
   return (
     <div style={bubbleStyle}>
+
+      {/* Citation Block */}
+      {citation && (
+        <div style={citationBlock}>
+          <ReactMarkdown
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              a: ({ node, ...props }) => (
+                <a {...props} style={citationLink} />
+              )
+            }}
+          >
+            {citation}
+          </ReactMarkdown>
+        </div>
+      )}
+
+
       {/* Render Answer */}
-      <ReactMarkdown>{answer}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+        {answer}
+      </ReactMarkdown>
+
+      {/* Source Block */}
+      <div style={{ marginTop: 16 }}>
+        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+          {sources}
+        </ReactMarkdown>
+      </div>
 
       {/* Supported Phrases Dropdown */}
       <details style={{ marginTop: 12 }}>
@@ -50,7 +81,9 @@ export default function AnswerBubble({
               View original answer
             </summary>
             <div style={{ marginTop: 8 }}>
-              <ReactMarkdown>{originalAnswer}</ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                {originalAnswer}
+              </ReactMarkdown>
             </div>
           </details>
         )}

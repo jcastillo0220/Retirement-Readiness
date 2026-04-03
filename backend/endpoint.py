@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -59,6 +60,10 @@ def ask_ai(prompt: str) -> str:
             detail=f"Gemini error: {type(e).__name__}: {str(e)}"
         )
 
+def strip_after_json_fence(text: str) -> str:
+    # Remove anything starting from ```json (or ``` JSON, case‑insensitive)
+    return re.split(r"```json", text, flags=re.IGNORECASE)[0].strip()
+
 @app.get("/health")
 def health():
     return {"status": "ok", "model": MODEL_NAME}
@@ -95,6 +100,9 @@ async def generate(req: Request):
     # ---------------------------
     # 1. Retrieve chunks
     # ---------------------------
+    print("==================================================")
+    print(f"User question: {user_question}")
+    print(is_definition_question(user_question) + "\n\n")
     if is_definition_question(user_question):
         retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:
@@ -103,14 +111,14 @@ async def generate(req: Request):
     if not retrieved_chunks:
         raise HTTPException(500, "No chunks retrieved.")
         logging.info("Retrieved Chunks:")
-
-    for i, chunk in enumerate(retrieved_chunks, start=1):
-        logging.info(
-            f"\n--- Chunk {i} ---\n"
-            f"ID: {chunk.get('id')}\n"
-            f"url: {chunk.get('url')}\n"
-            f"Text:\n{chunk.get('text')}\n"
-        )
+    print("--------------------------------------------------")
+    # for i, chunk in enumerate(retrieved_chunks, start=1):
+    #    logging.info(
+    #        f"\n--- Chunk {i} ---\n"
+    #        f"ID: {chunk.get('id')}\n"
+    #        f"url: {chunk.get('url')}\n"
+    #        f"Text:\n{chunk.get('text')}\n"
+    #    )
 
     # ---------------------------
     # 2. Build prompt
@@ -125,7 +133,7 @@ async def generate(req: Request):
     {{"validation":"valid","confidence":4}}
     """.strip()
 
-    raw = ask_ai(single_prompt)
+    raw_answer = ask_ai(single_prompt)
 
     # ---------------------------
     # 3. REPAIR LOOP ✅
@@ -136,23 +144,26 @@ async def generate(req: Request):
     final_confidence = None
     last_errors = []
 
-    current_raw = raw
-
-    for attempt in range(1, MAX_REPAIR_ATTEMPTS + 1):
+    for attempt in range(1, MAX_REPAIR_ATTEMPTS):
         logging.info(f"Attempt {attempt}")
 
-        answer_text, meta = parse_validation_json(current_raw)
+        answer_text, meta = parse_validation_json(raw_answer)
         final_confidence = meta.get("confidence")
-
-        if original_answer is None:
-            original_answer = answer_text
 
         model_bad = meta.get("validation") in ["invalid", "uncertain"]
 
-        answer_with_citations, citation_map = format_with_citations(
+        citation_line, answer_body, sources_block, citation_map = format_with_citations(
             answer_text,
             retrieved_chunks
         )
+
+        # For validation, you still need the combined string:
+        answer_with_citations = ""
+
+        if citation_line:
+            answer_with_citations += citation_line + "\n\n"
+
+        answer_with_citations += answer_body + "\n\n" + sources_block
 
         validation = validate_answer(
             answer_with_citations,
@@ -160,40 +171,38 @@ async def generate(req: Request):
             retrieved_chunks
         )
 
+        logging.info(f"Model_bad {model_bad}")
+        logging.info(f"Validation: {validation}")
         if not model_bad and validation["valid"]:
             validated = True
             final_answer = answer_with_citations
             break
+        else:
+            repair_reasons = []
 
-        repair_reasons = []
+            if model_bad:
+                repair_reasons.append("Model flagged answer as invalid/uncertain")
 
-        if model_bad:
-            repair_reasons.append("Model flagged answer as invalid/uncertain")
+            if not validation["valid"]:
+                repair_reasons.extend(validation["errors"])
 
-        if not validation["valid"]:
-            repair_reasons.extend(validation["errors"])
+            last_errors = repair_reasons
+            final_answer = answer_with_citations
 
-        last_errors = repair_reasons
-        final_answer = answer_with_citations
+            repair_prompt = build_repair_prompt(
+                answer_text,
+                user_question,
+                repair_reasons
+            )
 
-        if attempt == MAX_REPAIR_ATTEMPTS:
-            break
-
-        repair_prompt = build_repair_prompt(
-            answer_text,
-            user_question,
-            repair_reasons
-        )
-
-        current_raw = ask_ai(repair_prompt)
+            raw_answer = ask_ai(repair_prompt)
 
     # ---------------------------
     # 4. Suggestions + return
     # ---------------------------
+    answer_body = strip_after_json_fence(answer_body)
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
-    grounding_report = verify_answer_grounding(final_answer, retrieved_chunks)
-
-    print("GROUNDING REPORT:", grounding_report)
+    grounding_report = verify_answer_grounding(answer_body, retrieved_chunks)
 
     supported_phrases = [
         {
@@ -206,7 +215,9 @@ async def generate(req: Request):
     ]
 
     result = {
-        "answer": final_answer,
+        "citation": citation_line,
+        "answer": answer_body,
+        "sources": sources_block,
         "validated": validated,
         "confidence": final_confidence,
         "suggestions": suggestions,
@@ -224,7 +235,7 @@ async def scenario(req: Request):
     data = await req.json()
 
     try:
-        projection, explanation = compute_projection(
+        explanation = compute_projection(
             age=data["age"],
             retirement_age=data["retirement_age"],
             annual_income=data["annual_income"],
@@ -233,7 +244,6 @@ async def scenario(req: Request):
         )
 
         return {
-            "projection": projection,
             "explanation": explanation,
         }
 

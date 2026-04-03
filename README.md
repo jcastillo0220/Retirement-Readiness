@@ -93,9 +93,13 @@ Our venture helps prepare individuals who are on a path to retirement and want t
    ```bash
    npm install -D tailwindcss postcss autoprefixer
    ```
-6. Now Run:
+6. Install Rehype-raw
+   ```bash
+   npm install rehype-raw
+   ```
+7. Now Run:
    ```bash
    npm run dev
    ```
-7. Navigate to the local host link in the terminal. **Make sure you always run your frontend as well when connecting to the application**
+8. Navigate to the local host link in the terminal. **Make sure you always run your frontend as well when connecting to the application**
 

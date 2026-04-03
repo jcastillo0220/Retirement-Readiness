@@ -236,3 +236,18 @@ export const dropdownBodyStyle = (isOpen) => ({
   opacity: isOpen ? 1 : 0,
   paddingTop: isOpen ? "12px" : "0px",
 });
+
+export const citationBlock = {
+  marginBottom: 12,
+  padding: "6px 10px",
+  borderRadius: 6,
+  border: `1px solid ${colors.chip.replace("0.12", "0.22")}`,
+};
+
+export const citationLink = {
+  color: "#0066cc",
+  textDecoration: "underline",
+  fontWeight: 600,
+  padding: "2px 2px",
+  borderRadius: 4
+};

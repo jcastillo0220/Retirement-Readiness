@@ -28,6 +28,10 @@ def parse_validation_json(raw: str):
             meta["validation"] = parsed.get("validation", "uncertain")
             meta["confidence"] = int(parsed.get("confidence", 1))
 
+            print("Parsed validation JSON successfully:")
+            print("Answer text:\n" + answer_text + "\n")
+            print("Meta:\n" + str(meta) + "\n")
+
             return answer_text, meta
     except Exception:
         pass

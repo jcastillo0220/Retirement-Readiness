@@ -1,6 +1,6 @@
 def format_with_citations(answer: str, retrieved_chunks: list):
     if not retrieved_chunks:
-        return answer, {}
+        return None, answer, "", {}
 
     primary = retrieved_chunks[0]
     source_name = primary["source"]
@@ -12,24 +12,18 @@ def format_with_citations(answer: str, retrieved_chunks: list):
         source_url = "http://localhost:8000/pdf/retirement-overview"
         is_pdf = True
 
-    # 1. Top line
+    # 1. Citation line
+    citation_line = None
     if is_pdf:
-        top_line = f"According to [{source_name}]({source_url}),"
-        # Add required blank line for Markdown
-        cited_answer = f"{top_line}\n\n{answer.lstrip()}"
-    else:
-        cited_answer = answer
+        citation_line = (
+            f"According to "
+            f"<a href='{source_url}' class='citation-link'>{source_name}</a>,"
+        )
 
-    # 2. Citation map
-    citation_map = {
-    "main": {
-        "source": source_name,
-        "url": source_url,
-        "type": primary.get("type")
-        }
-    }
+    # 2. Answer body (no top line)
+    answer_body = answer.strip()
 
-    # 3. Sources section
+    # 3. Sources block
     unique_urls = set()
     for chunk in retrieved_chunks:
         if "Northwestern" in chunk["source"]:
@@ -44,9 +38,14 @@ def format_with_citations(answer: str, retrieved_chunks: list):
         else:
             sources_lines.append(f"- {u}")
 
-    sources_block = "\nSource:\n" + "\n".join(sources_lines)
+    sources_block = "Source:\n" + "\n".join(sources_lines)
 
-    # Add blank line before sources block
-    cited_answer += f"\n\n{sources_block}"
+    citation_map = {
+        "main": {
+            "source": source_name,
+            "url": source_url,
+            "type": primary.get("type")
+        }
+    }
 
-    return cited_answer, citation_map
+    return citation_line, answer_body, sources_block, citation_map

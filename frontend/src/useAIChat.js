@@ -2,7 +2,9 @@ import { useState, useRef } from "react";
 import { askAI, runScenario } from "./api";
 
 export function useAIChat() {
+  const [citation, setCitation] = useState("");
   const [answer, setAnswer] = useState("");
+  const [sources, setSources] = useState("");
   const [suggestedButtons, setSuggestedButtons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
@@ -23,7 +25,7 @@ export function useAIChat() {
     const finalTopicKey = topicKey || "definitions";
     const questionLabel = label;              // UI shows short label ONLY
 
-    setSelectedQuestion(questionLabel || "");       // ⭐ FIXED — UI uses label
+    setSelectedQuestion(questionLabel || "");       
     setValidated(true);
     setOriginalAnswer(null);
     setError(null);
@@ -43,7 +45,9 @@ export function useAIChat() {
       const isValid = res?.validated ?? true;
       const orig = res?.original_answer ?? null;
 
+      setCitation(res?.citation || "");
       setAnswer(finalAnswer);
+      setSources(res?.sources || "");
       setSuggestedButtons(suggestions);
       setValidated(isValid);
       setOriginalAnswer(orig);
@@ -54,10 +58,12 @@ export function useAIChat() {
         ...prev,
         {
           id,
-          label: questionLabel,   // ⭐ short label
-          prompt: finalPrompt,    // ⭐ full prompt
+          label: questionLabel,
+          prompt: finalPrompt,
           topicKey: finalTopicKey,
           answer: finalAnswer,
+          citation: res?.citation || "",
+          sources: res?.sources || "",
           validated: isValid,
           originalAnswer: orig,
           timestamp: Date.now(),
@@ -121,6 +127,8 @@ export function useAIChat() {
 
   return {
     answer,
+    citation,
+    sources,
     suggestedButtons,
     loading,
     selectedQuestion,
