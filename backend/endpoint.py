@@ -128,7 +128,6 @@ def build_source_context(chunks: list) -> str:
     parts = []
     for i, chunk in enumerate(chunks, start=1):
         parts.append(
-            f"[Source {i}]\n"
             f"Source Name: {chunk.get('source', 'Unknown')}\n"
             f"Section: {chunk.get('section', 'Unknown')}\n"
             f"URL: {chunk.get('url', '')}\n"
@@ -267,7 +266,8 @@ async def generate(req: Request):
 You are a retirement assistant.
  
 Use the provided source excerpts below to answer the question.
-Prefer the provided sources whenever relevant.
+Use the provided sources whenever relevant.
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
 If the sources do not fully support the answer, you may use general financial knowledge to provide a helpful answer.
 Clearly state when any part of the answer is based on general financial knowledge.
  
