@@ -27,9 +27,6 @@ import {
 export default function AIChat() {
   const {
     answer,
-    citation,
-    answerBody,
-    sources,
     suggestedButtons,
     loading,
     selectedQuestion,
@@ -67,10 +64,12 @@ export default function AIChat() {
     setUserQ("");
   }
 
+  const latestItem = history.length ? history[history.length - 1] : null;
+  const olderHistory = history.length > 1 ? history.slice(0, -1) : [];
+
   return (
     <div style={containerStyle}>
       <div style={shellStyle}>
-        {/* Header */}
         <div style={headerStyle}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <img
@@ -112,7 +111,6 @@ export default function AIChat() {
           </div>
         </div>
 
-        {/* Main Topic Buttons */}
         <TopicButtons
           buttons={topic_buttons}
           loading={loading}
@@ -122,7 +120,6 @@ export default function AIChat() {
           buttonRowStyle={buttonRowStyle}
         />
 
-        {/* Free-text input */}
         <div style={{ display: "flex", gap: 10, padding: "0 6px" }}>
           <input
             value={userQ}
@@ -161,7 +158,6 @@ export default function AIChat() {
           </button>
         </div>
 
-        {/* Suggested follow-ups */}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "0 6px" }}>
           {!loading &&
             suggestedButtons.map((item, index) => (
@@ -175,7 +171,6 @@ export default function AIChat() {
             ))}
         </div>
 
-        {/* Scenario form */}
         <ScenarioForm onSubmit={handleScenario} loading={loading} />
 
         {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
@@ -187,11 +182,12 @@ export default function AIChat() {
           </div>
         )}
 
-        {!loading && answer && (
+        {!loading && answer && latestItem && (
           <AnswerBubble
-            citation={citation}
-            answer={answerBody}
-            sources={sources}
+            answer={answer}
+            citation={latestItem.citation || ""}
+            answer_body={latestItem.answer_body || ""}
+            sources={latestItem.sources || ""}
             validated={validated}
             originalAnswer={originalAnswer}
             supported_phrases={supported_phrases}
@@ -202,7 +198,7 @@ export default function AIChat() {
         )}
 
         <HistoryList
-          history={history}
+          history={olderHistory}
           bubbleStyle={bubbleStyle}
           validatedPill={validatedPill}
           correctedPill={correctedPill}

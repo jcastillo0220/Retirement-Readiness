@@ -1,11 +1,34 @@
-import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import { citationBlock, citationLink } from "../styles";
+
+function MarkdownBlock({ children }) {
+  return (
+    <ReactMarkdown
+      components={{
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "#5B8CFF",
+              textDecoration: "underline",
+              fontWeight: 500,
+            }}
+          >
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {children}
+    </ReactMarkdown>
+  );
+}
 
 export default function AnswerBubble({
-  citation,
   answer,
+  citation,
+  answer_body,
   sources,
   validated,
   originalAnswer,
@@ -14,166 +37,62 @@ export default function AnswerBubble({
   validatedPill,
   correctedPill,
 }) {
-  const [phrasesOpen, setPhrasesOpen] = useState(false);
   const supported = supported_phrases || [];
-
-  // Extract ALL source badges from the citation line
-  // e.g. "According to [Fidelity](url), [IRS](url), and [Northwestern Mutual](url),"
-  const badgeMatches = [...(citation || "").matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)];
-  const badges = badgeMatches.map(([, name, url]) => ({
-    name,
-    url,
-    isPdf: url.includes("/pdf/") || url.toLowerCase().endsWith(".pdf"),
-  }));
-
-  // Shared link renderer — always opens in new tab
-  const linkRenderer = ({ href, children }) => (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={linkStyle}
-    >
-      {children}
-    </a>
-  );
 
   return (
     <div style={bubbleStyle}>
-
-      {/* ── Source badge chips — one per contributing source ── */}
-      {badges.length > 0 && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-          {badges.map((badge, i) => (
-            <a
-              key={i}
-              href={badge.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={badgeChipStyle}
-            >
-              {badge.isPdf ? "📄" : "🔗"} {badge.name}
-            </a>
-          ))}
-        </div>
-      )}
-
-      {/* ── Citation line ── */}
       {citation && (
-        <div style={citationBlock}>
-          <ReactMarkdown
-            rehypePlugins={[rehypeRaw]}
-            components={{ a: linkRenderer }}
-          >
-            {citation}
-          </ReactMarkdown>
-        </div>
-      )}
-
-      {/* ── Answer body ── */}
-      <div style={{ marginTop: 10 }}>
-        <ReactMarkdown
-          rehypePlugins={[rehypeRaw]}
-          components={{ a: linkRenderer }}
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "10px 12px",
+            border: "1px solid rgba(91,140,255,0.25)",
+            borderRadius: 10,
+            background: "rgba(91,140,255,0.06)",
+          }}
         >
-          {answer}
-        </ReactMarkdown>
-      </div>
+          <MarkdownBlock>{citation}</MarkdownBlock>
+        </div>
+      )}
 
-      {/* ── Sources block ── */}
+      <MarkdownBlock>{answer_body || answer}</MarkdownBlock>
+
       {sources && (
-        <div style={{ marginTop: 14 }}>
-          <ReactMarkdown
-            rehypePlugins={[rehypeRaw]}
-            components={{ a: linkRenderer }}
-          >
-            {sources}
-          </ReactMarkdown>
-        </div>
-      )}
-
-      {/* ── Supported phrases toggle ── */}
-      {supported.length > 0 && (
         <div style={{ marginTop: 12 }}>
-          <button
-            onClick={() => setPhrasesOpen((p) => !p)}
-            style={toggleBtnStyle}
-          >
-            {phrasesOpen ? "▼" : "▶"} Supported phrases ({supported.length})
-          </button>
-          {phrasesOpen && (
-            <ul style={{ marginTop: 6, paddingLeft: 18 }}>
-              {supported.map((phrase, i) => (
-                <li key={i} style={phraseItemStyle}>
-                  {typeof phrase === "string" ? phrase : phrase.phrase}
-                </li>
-              ))}
-            </ul>
-          )}
+          <MarkdownBlock>{sources}</MarkdownBlock>
         </div>
       )}
 
-      {/* ── Validation pill ── */}
-      <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center" }}>
+      <details style={{ marginTop: 12 }}>
+        <summary style={{ cursor: "pointer", opacity: 0.85 }}>
+          Supported phrases ({supported.length})
+        </summary>
+
+        <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+          {supported.map((p, i) => (
+            <li key={i}>{p}</li>
+          ))}
+        </ul>
+      </details>
+
+      <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
         {validated ? (
-          <span style={validatedPill}>✓ Validated</span>
+          <span style={validatedPill}>Validated</span>
         ) : (
-          <span style={correctedPill}>⚠ Corrected</span>
+          <span style={correctedPill}>Corrected</span>
         )}
 
         {!validated && originalAnswer && (
           <details style={{ marginLeft: 4 }}>
-            <summary style={{ cursor: "pointer", opacity: 0.85, fontSize: 13 }}>
+            <summary style={{ cursor: "pointer", opacity: 0.85 }}>
               View original answer
             </summary>
             <div style={{ marginTop: 8 }}>
-              <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{ a: linkRenderer }}>
-                {originalAnswer}
-              </ReactMarkdown>
+              <MarkdownBlock>{originalAnswer}</MarkdownBlock>
             </div>
           </details>
         )}
       </div>
-
     </div>
   );
 }
-
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-const linkStyle = {
-  color: "#5B8CFF",
-  textDecoration: "underline",
-  fontWeight: 600,
-};
-
-const badgeChipStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 5,
-  fontSize: 12,
-  fontWeight: 600,
-  padding: "4px 10px",
-  borderRadius: 999,
-  background: "rgba(91,140,255,0.14)",
-  border: "1px solid rgba(91,140,255,0.30)",
-  color: "#8fb3ff",
-  textDecoration: "none",
-  cursor: "pointer",
-};
-
-const toggleBtnStyle = {
-  background: "none",
-  border: "none",
-  color: "rgba(234,240,255,0.6)",
-  fontSize: 13,
-  cursor: "pointer",
-  padding: 0,
-};
-
-const phraseItemStyle = {
-  fontSize: 12,
-  color: "rgba(234,240,255,0.6)",
-  marginBottom: 3,
-  lineHeight: 1.5,
-};
