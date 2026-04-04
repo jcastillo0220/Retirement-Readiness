@@ -17,13 +17,14 @@ export default function AnswerBubble({
   const [phrasesOpen, setPhrasesOpen] = useState(false);
   const supported = supported_phrases || [];
 
-  // Extract source name + url from the citation markdown for the badge chip
-  // e.g. "According to [Northwestern Mutual](http://...),"
-  const badgeMatch = (citation || "").match(/\[([^\]]+)\]\(([^)]+)\)/);
-  const badge = badgeMatch
-    ? { name: badgeMatch[1], url: badgeMatch[2] }
-    : null;
-  const badgeIsPdf = badge && (badge.url.includes("/pdf/") || badge.url.endsWith(".pdf"));
+  // Extract ALL source badges from the citation line
+  // e.g. "According to [Fidelity](url), [IRS](url), and [Northwestern Mutual](url),"
+  const badgeMatches = [...(citation || "").matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)];
+  const badges = badgeMatches.map(([, name, url]) => ({
+    name,
+    url,
+    isPdf: url.includes("/pdf/") || url.toLowerCase().endsWith(".pdf"),
+  }));
 
   // Shared link renderer — always opens in new tab
   const linkRenderer = ({ href, children }) => (
@@ -40,21 +41,26 @@ export default function AnswerBubble({
   return (
     <div style={bubbleStyle}>
 
-      {/* ── Source badge chip ── */}
-      {badge && (
-        <a
-          href={badge.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={badgeChipStyle}
-        >
-          {badgeIsPdf ? "📄" : "🔗"} {badge.name}
-        </a>
+      {/* ── Source badge chips — one per contributing source ── */}
+      {badges.length > 0 && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+          {badges.map((badge, i) => (
+            <a
+              key={i}
+              href={badge.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={badgeChipStyle}
+            >
+              {badge.isPdf ? "📄" : "🔗"} {badge.name}
+            </a>
+          ))}
+        </div>
       )}
 
       {/* ── Citation line ── */}
       {citation && (
-        <div style={{ ...citationBlock, marginTop: badge ? 10 : 0 }}>
+        <div style={citationBlock}>
           <ReactMarkdown
             rehypePlugins={[rehypeRaw]}
             components={{ a: linkRenderer }}
