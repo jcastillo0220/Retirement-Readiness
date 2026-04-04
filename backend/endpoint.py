@@ -128,7 +128,6 @@ def build_source_context(chunks: list) -> str:
     parts = []
     for i, chunk in enumerate(chunks, start=1):
         parts.append(
-            f"[Source {i}]\n"
             f"Source Name: {chunk.get('source', 'Unknown')}\n"
             f"Section: {chunk.get('section', 'Unknown')}\n"
             f"URL: {chunk.get('url', '')}\n"
@@ -152,10 +151,14 @@ Bad Answer:
 Issues:
 {issues}
  
-Use the provided source excerpts if they are helpful. If the sources do not fully support the answer,
-you may use general financial knowledge to provide a helpful answer.
-Clearly state when any part of the answer is based on general knowledge.
+Make sure to use only the souces provided below to answer the question. 
+Do not include any information that cannot be supported by the provided sources.
  
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
+ 
+Keep the answer short, simple, easy to read for beginners, and in Markdown.
+A total answer length of 2 - 3 sentences maximum.
+
 Source Excerpts:
 {source_context}
  
@@ -167,25 +170,23 @@ Rules:
 - End with one final JSON line in this exact format:
 {{"validation":"valid","confidence":4}}
 """.strip()
- 
- 
-def build_fallback_prompt(user_question: str) -> str:
-    return f"""
-You are a retirement assistant.
- 
-Answer the question clearly and simply using general financial knowledge.
-Be helpful, concise, and use Markdown.
-Because this answer is not grounded in the provided project sources, begin with this note:
- 
-**Note:** This answer is based on general financial knowledge and not the project's loaded sources.
- 
-Question:
-{user_question}
- 
-After the answer, output one final line of JSON in this exact format:
-{{"validation":"valid","confidence":2}}
-""".strip()
- 
+
+def build_refusal_response(reason: str, label=None):
+    return {
+        "answer": (
+            "I could not find a verified source for that question, "
+            "so I can’t provide a grounded answer right now."
+        ),
+        "validated": False,
+        "confidence": 0,
+        "suggestions": [],
+        "original_answer": None,
+        "validation_errors": [reason],
+        "supported_phrases": [],
+        "cached": False,
+        "label_used": label,
+        "refused": True,
+    }
  
 # ============================
 # ROUTES
@@ -242,8 +243,8 @@ async def generate(req: Request):
     # 1A. FALLBACK IF NO CHUNKS
     # ============================
     if not retrieved_chunks:
-        fallback_raw = ask_ai(build_fallback_prompt(user_question))
-        fallback_answer, meta = parse_validation_json(fallback_raw)
+        logging.warning("No chunks retrieved for question: %s", user_question)
+        return build_refusal_response("No verified source retrieved", label=label)
  
         result = {
             "answer": fallback_answer,
@@ -267,11 +268,12 @@ async def generate(req: Request):
 You are a retirement assistant.
  
 Use the provided source excerpts below to answer the question.
-Prefer the provided sources whenever relevant.
+Use the provided sources whenever relevant.
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
 If the sources do not fully support the answer, you may use general financial knowledge to provide a helpful answer.
-Clearly state when any part of the answer is based on general financial knowledge.
  
-Keep the answer short, simple, and in Markdown.
+Keep the answer short, simple, easy to read for beginners, and in Markdown.
+A total answer length of 2 - 3 sentences maximum.
  
 Question:
 \"\"\"{user_question}\"\"\"
@@ -344,41 +346,17 @@ After the answer, output one final line of JSON in this exact format:
         )
  
         current_raw = ask_ai(repair_prompt)
- 
-    # ============================
-    # 3A. FINAL FALLBACK IF RESULT STILL WEAK
-    # ============================
-    weak_final = (
-        not final_answer.strip()
-        or "Not found in provided sources" in final_answer
-    )
- 
-    if weak_final:
-        fallback_raw = ask_ai(build_fallback_prompt(user_question))
-        fallback_answer, meta = parse_validation_json(fallback_raw)
- 
-        final_answer = fallback_answer
-        final_confidence = meta.get("confidence", 2)
-        validated = False
-        last_errors = ["Fallback used: retrieved sources were not sufficient for a helpful answer."]
-        original_answer = None
- 
-        result = {
-            "answer": final_answer,
-            "validated": validated,
-            "confidence": final_confidence,
-            "suggestions": generate_suggestions(final_answer, topic_key=topic_key),
-            "original_answer": original_answer,
-            "validation_errors": last_errors,
-            "supported_phrases": [],
-        }
- 
-        cache_set(cache_key, result)
-        return {**result, "cached": False, "label_used": label}
- 
+
+        if not validated:
+            logging.warning("Answer failed validation after all repair attempts: %s", last_errors)
+            return build_refusal_response(
+                "Answer could not be grounded after validation: " + "; ".join(last_errors),
+                label=label
+            )
     # ============================
     # 4. POST-VALIDATION / RETURN
     # ============================
+
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
     grounding_report = verify_answer_grounding(final_answer, retrieved_chunks)
  
