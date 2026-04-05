@@ -100,9 +100,16 @@ def ask_ai(prompt: str) -> str:
         )
  
  
-def is_definition_question(q: str) -> bool:
-    q = (q or "").lower()
-    return any(k in q for k in ["what is", "define", "explain", "meaning"])
+def is_definition_question(topic_key: str) -> bool:
+    topic_key = (topic_key or "").lower().strip()
+
+    allowed = {
+        "roth_ira",
+        "traditional_ira",
+        "rollover_ira",
+    }
+
+    return topic_key in allowed
  
  
 def sanitize_question(text: str) -> str:
@@ -234,6 +241,9 @@ async def generate(req: Request):
     # ============================
     # 1. RETRIEVE CHUNKS
     # ============================
+    print("Retrieving chunks for topic key:", topic_key)
+    print("Is definition question?", is_definition_question(user_question))
+    print("User question:", user_question)
     if is_definition_question(user_question):
         retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:
