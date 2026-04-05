@@ -430,7 +430,7 @@ After the answer, output one final line of JSON in this exact format:
 @app.post("/api/scenario")
 async def scenario(req: Request):
     data = await req.json()
-
+ 
     try:
         projection, explanation = compute_projection(
             age=int(data["age"]),
@@ -440,54 +440,24 @@ async def scenario(req: Request):
             monthly_contribution=float(data["monthly_contribution"]),
             return_rate=float(data.get("return_rate", 0.035)),
         )
-
-        citation = (
-            "According to "
-            "[Northwestern Mutual](http://localhost:8000/pdf/retirement-overview) "
-            "and "
-            "[IRS](https://www.irs.gov/retirement-plans/individual-retirement-arrangements-iras),"
-        )
-
-        answer_body = (
-            f"{explanation}\n\n"
-            "Note: This projection is an estimate generated from your inputs "
-            "using the app's scenario engine and assumed return rate."
-        )
-
-        sources = "\n".join([
-            "Sources:",
-            "- [Northwestern Mutual — Retirement Plan Overview (PDF)](http://localhost:8000/pdf/retirement-overview)",
-            "- [IRS — Individual Retirement Arrangements (IRAs)](https://www.irs.gov/retirement-plans/individual-retirement-arrangements-iras)",
-            "- Projection values are calculated from the user's inputs using the app's scenario engine."
-        ])
-
-        full_answer = f"{citation}\n\n{answer_body}\n\n{sources}"
-
+ 
         return {
             "projection": projection,
             "explanation": explanation,
-            "answer": full_answer,
-            "citation": citation,
-            "answer_body": answer_body,
-            "sources": sources,
-            "validated": True,
-            "confidence": 4,
-            "supported_phrases": [],
-            "scenario_based": True,
         }
-
+ 
     except KeyError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Missing required field: {e.args[0]}"
         )
-
+ 
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid scenario input: {str(e)}"
         )
-
+ 
     except Exception as e:
         logger.exception("Scenario endpoint failed")
         raise HTTPException(
