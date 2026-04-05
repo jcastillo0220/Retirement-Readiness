@@ -1,16 +1,29 @@
 import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
 
-const linkRenderer = ({ href, children }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{ color: "#5B8CFF", textDecoration: "underline", fontWeight: 600 }}
-  >
-    {children}
-  </a>
-);
+function MarkdownBlock({ children }) {
+  return (
+    <ReactMarkdown
+      components={{
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "#5B8CFF",
+              textDecoration: "underline",
+              fontWeight: 500,
+            }}
+          >
+            {children}
+          </a>
+        ),
+      }}
+    >
+      {children}
+    </ReactMarkdown>
+  );
+}
 
 export default function HistoryList({
   history,
@@ -57,9 +70,27 @@ export default function HistoryList({
               </div>
             )}
 
-            <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{ a: linkRenderer }}>
-              {item.answer}
-            </ReactMarkdown>
+            {item.citation && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  padding: "10px 12px",
+                  border: "1px solid rgba(91,140,255,0.25)",
+                  borderRadius: 10,
+                  background: "rgba(91,140,255,0.06)",
+                }}
+              >
+                <MarkdownBlock>{item.citation}</MarkdownBlock>
+              </div>
+            )}
+
+            <MarkdownBlock>{item.answer_body || item.answer}</MarkdownBlock>
+
+            {item.sources && (
+              <div style={{ marginTop: 12 }}>
+                <MarkdownBlock>{item.sources}</MarkdownBlock>
+              </div>
+            )}
 
             <div
               style={{
@@ -71,9 +102,9 @@ export default function HistoryList({
               }}
             >
               {item.validated ? (
-                <span style={validatedPill}>✓ Validated</span>
+                <span style={validatedPill}>Validated</span>
               ) : (
-                <span style={correctedPill}>⚠ Corrected</span>
+                <span style={correctedPill}>Corrected</span>
               )}
 
               {!item.validated && item.originalAnswer && (
@@ -82,9 +113,7 @@ export default function HistoryList({
                     View original answer
                   </summary>
                   <div style={{ marginTop: 8 }}>
-                    <ReactMarkdown rehypePlugins={[rehypeRaw]} components={{ a: linkRenderer }}>
-                      {item.originalAnswer}
-                    </ReactMarkdown>
+                    <MarkdownBlock>{item.originalAnswer}</MarkdownBlock>
                   </div>
                 </details>
               )}

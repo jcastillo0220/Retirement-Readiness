@@ -3,9 +3,6 @@ import { askAI, runScenario } from "./api";
 
 export function useAIChat() {
   const [answer, setAnswer] = useState("");
-  const [citation, setCitation] = useState("");
-  const [answerBody, setAnswerBody] = useState("");
-  const [sources, setSources] = useState("");
   const [suggestedButtons, setSuggestedButtons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
@@ -48,9 +45,6 @@ export function useAIChat() {
       const orig = res?.original_answer ?? null;
 
       setAnswer(finalAnswer);
-      setCitation(res?.citation ?? "");
-      setAnswerBody(res?.answer_body ?? finalAnswer);
-      setSources(res?.sources ?? "");
       setSuggestedButtons(suggestions);
       setValidated(isValid);
       setOriginalAnswer(orig);
@@ -65,6 +59,9 @@ export function useAIChat() {
           prompt: finalPrompt,
           topicKey: finalTopicKey,
           answer: finalAnswer,
+          citation: res?.citation || "",
+          answer_body: res?.answer_body || finalAnswer,
+          sources: res?.sources || "",
           validated: isValid,
           originalAnswer: orig,
           timestamp: Date.now(),
@@ -107,10 +104,12 @@ export function useAIChat() {
 
       if (id !== requestIdRef.current) return;
 
-      const { projection, explanation } = res;
+      const { projection, explanation, answer, citation, answer_body, sources } = res;
 
-      setAnswer(explanation || "");
+      setAnswer(answer || explanation || "");
       setSupportedPhrases([]);
+      setValidated(true);
+      setOriginalAnswer(null);
 
       setHistory((prev) => [
         ...prev,
@@ -119,12 +118,16 @@ export function useAIChat() {
           label: "Personalized Scenario",
           prompt: JSON.stringify(inputs),
           topicKey: "scenario",
-          answer: explanation || "",
+          answer: answer || explanation || "",
+          citation: citation || "",
+          answer_body: answer_body || explanation || "",
+          sources: sources || "",
           validated: true,
           originalAnswer: null,
           timestamp: Date.now(),
           cached: false,
           projection,
+          supported_phrases: [],
         },
       ]);
     } catch (err) {
@@ -138,9 +141,6 @@ export function useAIChat() {
 
   return {
     answer,
-    citation,
-    answerBody,
-    sources,
     suggestedButtons,
     loading,
     selectedQuestion,
