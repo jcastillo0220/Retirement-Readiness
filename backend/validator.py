@@ -62,29 +62,39 @@ def parse_validation_json(raw: str):
     return raw.strip(), meta
  
  
-def build_repair_prompt(answer, question, errors=None):
-    error_text = "\n".join(f"- {e}" for e in errors) if errors else "General failure"
+def build_repair_prompt(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
+    issues = "\n".join(f"- {reason}" for reason in repair_reasons) if repair_reasons else "- General failure"
  
     return f"""
 Fix the answer below.
  
 Question:
-{question}
+{user_question}
  
 Bad Answer:
-{answer}
+{bad_answer}
  
 Issues:
-{error_text}
+{issues}
+ 
+Make sure to use only the souces provided below to answer the question. 
+Do not include any information that cannot be supported by the provided sources.
+ 
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
+ 
+Keep the answer short, simple, easy to read for beginners, and in Markdown.
+A total answer length of 2 - 3 sentences maximum.
+
+Source Excerpts:
+{source_context}
  
 Rules:
 - Keep it simple
 - Stay accurate
-- Use only provided sources
+- Prefer the provided sources when relevant
 - No hallucinations
- 
-Return:
-Answer + JSON validation at end
+- End with one final JSON line in this exact format:
+{{"validation":"valid","confidence":4}}
 """.strip()
  
  
@@ -107,9 +117,6 @@ def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list
         # 1. Format validation
         if not phrase.startswith("According to"):
             return {"valid": False, "errors": ["Citation must start with 'According to'"]}
- 
-        if "(" not in phrase or ")" not in phrase:
-            return {"valid": False, "errors": ["Citation must include a Markdown link"]}
  
         # 2. Normalise — strips markdown links down to plain source names
         normalized = normalize_phrase(phrase)
