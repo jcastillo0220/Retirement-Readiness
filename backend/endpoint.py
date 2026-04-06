@@ -134,7 +134,6 @@ def build_source_context(chunks: list) -> str:
     parts = []
     for i, chunk in enumerate(chunks, start=1):
         parts.append(
-            f"[Source {i}]\n"
             f"Source Name: {chunk.get('source', 'Unknown')}\n"
             f"Section: {chunk.get('section', 'Unknown')}\n"
             f"URL: {chunk.get('url', '')}\n"
@@ -349,34 +348,155 @@ After the answer, output one final line of JSON in this exact format:
 @app.post("/api/scenario")
 async def scenario(req: Request):
     data = await req.json()
- 
+
     try:
-        projection, explanation = compute_projection(
-            age=int(data["age"]),
-            retirement_age=int(data["retirement_age"]),
-            annual_income=float(data["annual_income"]),
-            current_savings=float(data["current_savings"]),
-            monthly_contribution=float(data["monthly_contribution"]),
-            return_rate=float(data.get("return_rate", 0.035)),
+        # ---------------------------
+        # 0. Validate inputs
+        # ---------------------------
+        required_fields = [
+            "age", "retirement_age", "annual_income",
+            "current_savings", "monthly_contribution"
+        ]
+
+        for f in required_fields:
+            if f not in data:
+                raise KeyError(f)
+
+        age = int(data["age"])
+        retirement_age = int(data["retirement_age"])
+        annual_income = float(data["annual_income"])
+        current_savings = float(data["current_savings"])
+        monthly_contribution = float(data["monthly_contribution"])
+        return_rate = float(data.get("return_rate", 0.035))
+
+        if age < 0 or retirement_age < 0 or annual_income < 0 or current_savings < 0 or monthly_contribution < 0:
+            raise ValueError("Inputs cannot be negative.")
+
+        if retirement_age < age:
+            raise ValueError("Retirement age must be greater than or equal to current age.")
+
+        # ---------------------------
+        # 1. Deterministic projection
+        # ---------------------------
+        projection, raw_explanation = compute_projection(
+            age=age,
+            retirement_age=retirement_age,
+            annual_income=annual_income,
+            current_savings=current_savings,
+            monthly_contribution=monthly_contribution,
+            return_rate=return_rate,
         )
- 
+
+        # ---------------------------
+        # 2. Retrieve Fidelity chunks
+        # ---------------------------
+        retrieved_chunks = retrieve_numeric_chunks("compound_interest")
+
+        # ---------------------------
+        # 3. Build clean source context
+        # ---------------------------
+        source_context = build_source_context(retrieved_chunks)
+
+        # ---------------------------
+        # 4. Build LLM prompt
+        # ---------------------------
+        prompt = f"""
+You are a retirement assistant.
+
+Use the provided source excerpts below to explain the scenario.
+Use the provided sources whenever relevant.
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
+Do NOT invent citations — the system will add them automatically.
+
+Keep the answer short, simple, and easy to read.
+Use clear spacing and short sections.
+Make the explanation simple, clear, and condensed.
+
+Your output MUST follow this structure:
+
+Explanation of Projection
+- Write 2–3 sentences explaining what the projection means.
+- You ARE allowed to use the deterministic values provided (age, years to grow, projected balance, return rate).
+- Do NOT calculate anything yourself.
+
+Explanation of Inputs
+- For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate),
+  write a short, simple sentence explaining what that input represents.
+- Use the provided values, but explain them in your own words.
+- Keep each line concise.
+
+Scenario Explanation (context only — do NOT repeat this text directly):
+\"\"\"{raw_explanation}\"\"\"
+
+Provided Sources:
+{source_context}
+"""
+
+        # ---------------------------
+        # 5. Ask the LLM
+        # ---------------------------
+        llm_answer = ask_ai(prompt)
+
+        # ---------------------------
+        # 6. Format with citations (5-value return)
+        # ---------------------------
+        (
+            cited_answer,
+            citation_map,
+            citation_line,
+            raw_answer_clean,
+            sources_block
+        ) = format_with_citations(llm_answer, retrieved_chunks)
+
+        # ---------------------------
+        # 7. Validate citations
+        # ---------------------------
+        validation = validate_answer(
+            cited_answer,
+            citation_map,
+            retrieved_chunks
+        )
+
+        # ---------------------------
+        # 8. Repair loop if needed
+        # ---------------------------
+        if not validation["valid"]:
+            repair_prompt = build_repair_prompt(
+                cited_answer,
+                llm_answer,
+                validation["errors"]
+            )
+            repaired = ask_ai(repair_prompt)
+
+            (
+                cited_answer,
+                citation_map,
+                citation_line,
+                raw_answer_clean,
+                sources_block
+            ) = format_with_citations(repaired, retrieved_chunks)
+
+        # ---------------------------
+        # 9. Return final response
+        # ---------------------------
         return {
-            "projection": projection,
-            "explanation": explanation,
+            "projection": projection,      # deterministic math
+            "explanation": cited_answer,   # LLM explanation with citations
+            "citations": citation_map      # Fidelity grounding
         }
- 
+
     except KeyError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Missing required field: {e.args[0]}"
         )
- 
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid scenario input: {str(e)}"
         )
- 
+
     except Exception as e:
         logger.exception("Scenario endpoint failed")
         raise HTTPException(

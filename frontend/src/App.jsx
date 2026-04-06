@@ -185,6 +185,7 @@ export default function AIChat() {
         {!loading && answer && latestItem && (
           <AnswerBubble
             answer={answer}
+            projection={latestItem.projection} 
             citation={latestItem.citation || ""}
             answer_body={latestItem.answer_body || ""}
             sources={latestItem.sources || ""}

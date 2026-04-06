@@ -27,6 +27,7 @@ function MarkdownBlock({ children }) {
 
 export default function AnswerBubble({
   answer,
+  projection,   // ⭐ this is now the correct prop
   citation,
   answer_body,
   sources,
@@ -41,6 +42,37 @@ export default function AnswerBubble({
 
   return (
     <div style={bubbleStyle}>
+
+      {/* ⭐ FIXED: use projection, not answer.projection */}
+      {projection && (
+        <div
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            borderRadius: 10,
+            padding: "10px 14px",
+            marginBottom: 10,
+            border: "1px solid rgba(255,255,255,0.10)",
+          }}
+        >
+          {Object.entries(projection).map(([k, v]) => (
+            <div
+              key={k}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 6,
+              }}
+            >
+              <span style={{ opacity: 0.7, textTransform: "capitalize" }}>
+                {k.replace(/_/g, " ")}
+              </span>
+              <span>{String(v)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {citation && (
         <div
           style={{
