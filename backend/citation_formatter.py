@@ -1,65 +1,41 @@
-def _resolve_chunk_source(chunk: dict) -> dict:
-    """
-    Normalize a chunk's source name and URL into a display-ready dict.
-    Returns: { name, url, label, is_pdf }
-    """
-    source = chunk.get("source", "")
-    url = chunk.get("url", "")
-    section = chunk.get("section", "").replace("_", " ").title()
-
-    if "Northwestern" in source:
-        return {
-            "name": "Northwestern Mutual",
-            "url": "http://localhost:8000/pdf/retirement-overview",
-            "label": "Retirement Plan Overview (PDF)",
-            "is_pdf": True,
-        }
-
-    if source == "IRS":
-        return {
-            "name": "IRS",
-            "url": url,
-            "label": f"IRS.gov — {section}" if section else "IRS.gov",
-            "is_pdf": False,
-        }
-
-    # Fidelity or any future web source
-    return {
-        "name": source,
-        "url": url,
-        "label": section if section else source,
-        "is_pdf": url.lower().endswith(".pdf"),
-    }
-
-
 def format_with_citations(answer: str, retrieved_chunks: list):
     if not retrieved_chunks:
-        return answer, {}, "", answer, ""
+        return None, answer, "", {}
 
-    # Collect all unique sources from every retrieved chunk
-    seen_urls = set()
-    unique_sources = []
-
+    # -----------------------------
+    # Normalize ALL chunk URLs
+    # -----------------------------
+    normalized_sources = []
     for chunk in retrieved_chunks:
-        resolved = _resolve_chunk_source(chunk)
-        if resolved["url"] not in seen_urls:
-            seen_urls.add(resolved["url"])
-            unique_sources.append(resolved)
+        name = chunk.get("source")
+        url = chunk.get("url")
+        source_type = chunk.get("type")
 
-    # Primary source (first unique) for citation_map
+        # Fix PDF URLs globally
+        if source_type == "pdf":
+            url = "http://localhost:8000/pdf/retirement-overview"
+
+        normalized_sources.append({
+            "name": name,
+            "url": url,
+            "type": source_type,
+            "label": chunk.get("section", "").replace("_", " ").title() or name
+        })
+
+    # Deduplicate by URL
+    unique_sources = []
+    seen = set()
+    for s in normalized_sources:
+        if s["url"] not in seen:
+            seen.add(s["url"])
+            unique_sources.append(s)
+
+    # Primary source
     primary = unique_sources[0]
 
-    citation_map = {
-        "main": {
-            "source": primary["name"],
-            "url": primary["url"],
-            "type": retrieved_chunks[0].get("type"),
-        },
-        # All sources keyed by name for multi-source validator lookup
-        "all": {s["name"].lower(): s for s in unique_sources},
-    }
-
-    # Inline citation line — lists every contributing source
+    # -----------------------------
+    # Build citation line
+    # -----------------------------
     linked_names = [f"[{s['name']}]({s['url']})" for s in unique_sources]
 
     if len(linked_names) == 1:
@@ -73,14 +49,32 @@ def format_with_citations(answer: str, retrieved_chunks: list):
             + f", and {linked_names[-1]},"
         )
 
-    # Sources block
+    # -----------------------------
+    # Build citation_map
+    # -----------------------------
+    citation_map = {
+        "main": {
+            "source": primary["name"],
+            "url": primary["url"],
+            "type": primary["type"]
+        }
+    }
+
+    # -----------------------------
+    # Build Sources block
+    # -----------------------------
     sources_lines = ["---", "**Sources**"]
     for s in unique_sources:
-        sources_lines.append(f"- [{s['name']} — {s['label']}]({s['url']})")
+        icon = "📄" if s["type"] == "pdf" else "🔗"
+        sources_lines.append(
+            f"- {icon} [{s['name']} — {s['label']}]({s['url']})"
+        )
 
     sources_block = "\n".join(sources_lines)
 
-    # Full answer string (for cache / validator)
-    full_answer = f"{citation_line}\n\n{answer.lstrip()}\n\n{sources_block}"
+    # -----------------------------
+    # Full answer
+    # -----------------------------
+    full_answer = f"{citation_line}\n\n{answer.strip()}\n\n{sources_block}"
 
     return full_answer, citation_map, citation_line, answer.strip(), sources_block

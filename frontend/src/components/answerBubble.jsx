@@ -33,6 +33,7 @@ export default function AnswerBubble({
   validated,
   originalAnswer,
   supported_phrases = [],
+  grounding_report = [],
   bubbleStyle,
   validatedPill,
   correctedPill,
@@ -74,6 +75,25 @@ export default function AnswerBubble({
           ))}
         </ul>
       </details>
+
+      {grounding_report.length > 0 && (
+      <details style={{ marginTop: 12 }}>
+        <summary style={{ cursor: "pointer", opacity: 0.85 }}>
+          Grounding report ({grounding_report.length})
+        </summary>
+
+        <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+          {grounding_report.map((item, i) => (
+            <li key={i} style={{ marginBottom: 6 }}>
+              <strong>{item.phrase}</strong>:{" "}
+              <span style={{ color: item.supported ? "green" : "red" }}>
+                {item.supported ? "Supported" : "Not supported"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
+    )}
 
       <div style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center" }}>
         {validated ? (

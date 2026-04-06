@@ -1,5 +1,6 @@
 import json
 import re
+from grounding_verifier import extract_key_phrases, extract_numeric_claims, is_financial_number, numeric_claim_supported, phrase_supported
 from extract_citation_phrases import extract_citation_phrases
  
  
@@ -107,6 +108,7 @@ def normalize(num):
  
  
 def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list):
+    errors = []
     phrases = extract_citation_phrases(answer_text)
  
     if not phrases:
@@ -130,4 +132,33 @@ def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list
         if primary_source and primary_source not in normalized:
             return {"valid": False, "errors": ["Citation does not match primary source"]}
  
-    return {"valid": True, "errors": []}
+    # 2. Phrase-level grounding
+    phrases = extract_key_phrases(answer_text)
+
+    unsupported = [
+        p for p in phrases
+        if not phrase_supported(p, retrieved_chunks)
+    ]
+
+    if unsupported:
+        errors.append(f"Unsupported phrases: {unsupported}")
+
+
+    # 3. Numeric claim validation
+    numeric_claims = [
+      n for n in extract_numeric_claims(answer_text)
+      if is_financial_number(n)
+    ]
+
+    unsupported_nums = [
+        n for n in numeric_claims
+        if not numeric_claim_supported(n, retrieved_chunks)
+    ]
+
+    if unsupported_nums:
+        errors.append(f"Unsupported numeric claims: {unsupported_nums}")
+
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors
+    }

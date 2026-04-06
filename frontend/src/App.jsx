@@ -188,6 +188,7 @@ export default function AIChat() {
             citation={latestItem.citation || ""}
             answer_body={latestItem.answer_body || ""}
             sources={latestItem.sources || ""}
+            grounding_report={latestItem.grounding_report || []}
             validated={validated}
             originalAnswer={originalAnswer}
             supported_phrases={supported_phrases}
