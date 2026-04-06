@@ -178,6 +178,29 @@ export default function AnswerBubble({
               </li>
             ))}
           </ul>
+          {/* Unsupported Phrases Section */}
+          {grounding_report.some(item => !item.supported) && (
+            <details style={{ marginTop: 12 }}>
+              <summary style={{ cursor: "pointer", opacity: 0.85 }}>
+                Unsupported Phrases (
+                  {grounding_report.filter(item => !item.supported).length}
+                )
+              </summary>
+
+              <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                {grounding_report
+                  .filter(item => !item.supported)
+                  .map((item, i) => (
+                    <li key={i} style={{ marginBottom: 10 }}>
+                      <strong>{item.phrase}</strong>
+                      <span style={{ color: "salmon", marginLeft: 6 }}>
+                        Not supported
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </details>
+          )}
         </details>
       )}
 
