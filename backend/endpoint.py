@@ -12,7 +12,7 @@ from google import genai
  
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
-from validator import parse_validation_json, validate_answer, build_repair_prompt
+from validator import parse_validation_json, validate_answer, build_repair_prompt, build_repair_prompt_scenario
 from scenario_engine import compute_projection
 from chunking import (
     load_all_chunks,
@@ -438,6 +438,11 @@ Provided Sources:
             raw_answer_clean,
             sources_block
         ) = format_with_citations(llm_answer, retrieved_chunks)
+        print("\nInitial LLM answer with citations:", cited_answer)
+        print("Citation line:", citation_line)
+        print("Raw answer clean:", raw_answer_clean)
+        print("Sources block:", sources_block)
+
 
         # ---------------------------
         # 7. Validate citations
@@ -452,10 +457,11 @@ Provided Sources:
         # 8. Repair loop if needed
         # ---------------------------
         if not validation["valid"]:
-            repair_prompt = build_repair_prompt(
+            repair_prompt = build_repair_prompt_scenario(
                 cited_answer,
                 llm_answer,
-                validation["errors"]
+                validation["errors"],
+                source_context
             )
             repaired = ask_ai(repair_prompt)
 
@@ -470,9 +476,15 @@ Provided Sources:
         # ---------------------------
         # 9. Return final response
         # ---------------------------
+        raw_answer_clean, meta = parse_validation_json(raw_answer_clean)
+        print("Final cited answer:", raw_answer_clean)
+
         return {
             "projection": projection,      # deterministic math
-            "explanation": cited_answer,   # LLM explanation with citations
+            "citation": citation_line,  # human-readable source list  
+            "answer_body": raw_answer_clean,   # LLM explanation with citations
+            "explanation": raw_explanation,  # original LLM explanation of the math
+            "sources": sources_block,        # Formatted sources block
             "citations": citation_map      # Fidelity grounding
         }
 
