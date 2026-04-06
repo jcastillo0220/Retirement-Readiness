@@ -421,8 +421,7 @@ Explanation of Projection
 
 Explanation of Inputs
 - For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate),
-  write a short, simple sentence explaining what that input represents.
-- Use the provided values, but explain them in your own words.
+ write a short, simple sentence explaining what that input represents.
 - Keep each line concise.
 
 Scenario Explanation (context only — do NOT repeat this text directly):
