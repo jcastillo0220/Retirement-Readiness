@@ -455,7 +455,8 @@ Provided Sources:
             repair_prompt = build_repair_prompt(
                 cited_answer,
                 llm_answer,
-                validation["errors"]
+                validation["errors"],
+                source_context
             )
             repaired = ask_ai(repair_prompt)
 

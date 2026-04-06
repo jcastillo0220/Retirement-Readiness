@@ -31,6 +31,6 @@
 
 # Required metrics
 
-| Retriveal Accuracy | Citation Accuracy | Grounding Pass Rate | Refusal Accuracy |
-|--------------------|-------------------|---------------------|------------------|
-| 100% | 100% | 85% | 100% |
+| Retriveal Accuracy | Citation Coverage | Grounding Pass Rate | Halluication Rate | Refusal Accuracy |
+|--------------------|-------------------|---------------------|------------------|---------------------|
+| 100% | 100% | 85% | 95% | 100% |
