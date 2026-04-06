@@ -45,17 +45,27 @@ def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0
 
     return False
 
-
 def verify_answer_grounding(answer: str, retrieved_chunks: list):
     phrases = extract_key_phrases(answer)
     report = []
 
     for phrase in phrases:
-      supported = phrase_supported(phrase, retrieved_chunks, min_overlap=0.75)
-      report.append({
-          "phrase": phrase,
-          "supported": supported,
-      })
+        supporting_chunks = []
+
+        for chunk in retrieved_chunks:
+            if phrase_supported(phrase, [chunk], min_overlap=0.75):
+                supporting_chunks.append({
+                    "id": chunk.get("id"),
+                    "source": chunk.get("source"),
+                    "section": chunk.get("section"),
+                    "text": chunk.get("text"),
+                })
+
+        report.append({
+            "phrase": phrase,
+            "supported": len(supporting_chunks) > 0,
+            "chunks": supporting_chunks
+        })
 
     return report
 

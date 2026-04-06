@@ -92,6 +92,53 @@ export default function HistoryList({
               </div>
             )}
 
+            {item.grounding_report && item.grounding_report.length > 0 && (
+              <details style={{ marginTop: 12 }}>
+                <summary style={{ cursor: "pointer", opacity: 0.85 }}>
+                  Grounding Report ({item.grounding_report.length})
+                </summary>
+
+                <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                  {item.grounding_report.map((g, i) => (
+                    <li key={i} style={{ marginBottom: 10 }}>
+                      <strong>{g.phrase}</strong>:{" "}
+                      <span style={{ color: g.supported ? "lightgreen" : "salmon" }}>
+                        {g.supported ? "Supported" : "Not supported"}
+                      </span>
+
+                      {g.chunks && g.chunks.length > 0 && (
+                        <ul style={{ marginTop: 6, paddingLeft: 20 }}>
+                          {g.chunks.map((c, j) => (
+                            <li key={j}>
+                              <details>
+                                <summary style={{ cursor: "pointer" }}>
+                                  <em>Chunk {c.id}</em> — {c.source} ({c.section})
+                                </summary>
+
+                                <div
+                                  style={{
+                                    marginTop: 6,
+                                    padding: "10px 12px",
+                                    background: "rgba(255,255,255,0.05)",
+                                    borderRadius: 8,
+                                    border: "1px solid rgba(255,255,255,0.12)",
+                                    whiteSpace: "pre-wrap",
+                                    lineHeight: 1.45,
+                                  }}
+                                >
+                                  {c.text}
+                                </div>
+                              </details>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+
             <div
               style={{
                 marginTop: 10,

@@ -11,7 +11,6 @@ export function useAIChat() {
   const [error, setError] = useState(null);
   const [labelPrompt, setLabelPrompt] = useState(null);
   const [history, setHistory] = useState([]);
-  const [supported_phrases, setSupportedPhrases] = useState([]);
   const [activeTopicKey, setActiveTopicKey] = useState("definitions");
 
   const requestIdRef = useRef(0);
@@ -49,26 +48,25 @@ export function useAIChat() {
       setValidated(isValid);
       setOriginalAnswer(orig);
       setLabelPrompt(res?.label_prompt || null);
-      setSupportedPhrases(res?.supported_phrases || []);
 
       setHistory((prev) => [
-        ...prev,
-        {
-          id,
-          label: questionLabel,
-          prompt: finalPrompt,
-          topicKey: finalTopicKey,
-          answer: finalAnswer,
-          citation: res?.citation || "",
-          answer_body: res?.answer_body || finalAnswer,
-          sources: res?.sources || "",
-          validated: isValid,
-          originalAnswer: orig,
-          timestamp: Date.now(),
-          cached: !!res?.cached,
-          supported_phrases: res?.supported_phrases || [],
-        },
-      ]);
+      ...prev,
+      {
+        id,
+        label: questionLabel,
+        prompt: finalPrompt,
+        topicKey: finalTopicKey,
+        answer: finalAnswer,
+        citation: res?.citation || "",
+        answer_body: res?.answer_body || finalAnswer,
+        sources: res?.sources || "",
+        validated: isValid,
+        originalAnswer: orig,
+        timestamp: Date.now(),
+        cached: !!res?.cached,
+        grounding_report: res?.grounding_report || [],   // <-- REQUIRED
+      },
+    ]);
     } catch (err) {
       if (id === requestIdRef.current) {
         setError(err?.message || "Something went wrong.");
@@ -149,7 +147,6 @@ export function useAIChat() {
     error,
     labelPrompt,
     history,
-    supported_phrases,
     activeTopicKey,
     handleAsk,
     handleScenario,

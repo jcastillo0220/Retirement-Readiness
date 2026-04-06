@@ -34,13 +34,11 @@ export default function AIChat() {
     originalAnswer,
     error,
     history,
-    supported_phrases,
     activeTopicKey,
     handleAsk,
     handleScenario,
   } = useAIChat();
 
-  const [userQ, setUserQ] = useState("");
   const [status, setStatus] = useState("checking");
 
   useEffect(() => {
@@ -56,13 +54,6 @@ export default function AIChat() {
     { label: "What is a Rollover IRA?", prompt: "What is a Rollover IRA?", key: "rollover_ira" },
     { label: "What is a Roth 401(k)?", prompt: "What is a Roth 401(k)?", key: "roth_401k" },
   ];
-
-  function handleSendCustomQuestion() {
-    const trimmed = userQ.trim();
-    if (!trimmed) return;
-    handleAsk(trimmed, "definitions", trimmed);
-    setUserQ("");
-  }
 
   const latestItem = history.length ? history[history.length - 1] : null;
   const olderHistory = history.length > 1 ? history.slice(0, -1) : [];
@@ -120,44 +111,6 @@ export default function AIChat() {
           buttonRowStyle={buttonRowStyle}
         />
 
-        <div style={{ display: "flex", gap: 10, padding: "0 6px" }}>
-          <input
-            value={userQ}
-            onChange={(e) => setUserQ(e.target.value)}
-            placeholder="Ask anything..."
-            disabled={loading}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSendCustomQuestion();
-            }}
-            style={{
-              flex: 1,
-              padding: "12px 14px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#EAF0FF",
-              outline: "none",
-              fontSize: 14,
-            }}
-          />
-          <button
-            onClick={handleSendCustomQuestion}
-            disabled={loading || !userQ.trim()}
-            style={{
-              padding: "12px 16px",
-              borderRadius: 12,
-              border: "none",
-              background: "#5B8CFF",
-              color: "#fff",
-              fontWeight: 600,
-              cursor: loading || !userQ.trim() ? "not-allowed" : "pointer",
-              opacity: loading || !userQ.trim() ? 0.6 : 1,
-            }}
-          >
-            Send
-          </button>
-        </div>
-
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "0 6px" }}>
           {!loading &&
             suggestedButtons.map((item, index) => (
@@ -192,7 +145,6 @@ export default function AIChat() {
             grounding_report={latestItem.grounding_report || []}
             validated={validated}
             originalAnswer={originalAnswer}
-            supported_phrases={supported_phrases}
             bubbleStyle={bubbleStyle}
             validatedPill={validatedPill}
             correctedPill={correctedPill}

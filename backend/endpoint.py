@@ -205,9 +205,6 @@ async def generate(req: Request):
     # ============================
     # 1. RETRIEVE CHUNKS
     # ============================
-    print("Retrieving chunks for topic key:", topic_key)
-    print("Is definition question?", is_definition_question(topic_key))
-    print("User question:", user_question)
     if is_definition_question(topic_key):
         retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:
@@ -266,8 +263,6 @@ After the answer, output one final line of JSON in this exact format:
         if original_answer is None:
             original_answer = answer_text
  
-        model_bad = meta.get("validation") in ["invalid", "uncertain"]
- 
         answer_with_citations, citation_map, citation_line, answer_body, sources_block = format_with_citations(
             answer_text,
             retrieved_chunks
@@ -279,17 +274,17 @@ After the answer, output one final line of JSON in this exact format:
             retrieved_chunks
         )
  
-        if not model_bad and validation["valid"]:
+        print(f"\nValidation attempt {attempt}:")
+        print(f"Validation errors: {validation.get('errors', [])}")
+        if validation["valid"]:
             validated = True
             final_answer = answer_with_citations
             break
  
         repair_reasons = []
  
-        if model_bad:
-            repair_reasons.append("Model flagged answer as invalid/uncertain")
- 
         if not validation["valid"]:
+            repair_reasons.append("Model flagged answer as invalid/uncertain")
             repair_reasons.extend(validation.get("errors", []))
  
         last_errors = repair_reasons
@@ -319,10 +314,7 @@ After the answer, output one final line of JSON in this exact format:
 
     suggestions = generate_suggestions(answer_body, topic_key=topic_key)
     grounding_report = verify_answer_grounding(answer_body, retrieved_chunks)
- 
-    supported_phrases = [
-        g["phrase"] for g in grounding_report if g.get("supported")
-    ]
+
  
     result = {
         "answer": final_answer,
@@ -334,7 +326,7 @@ After the answer, output one final line of JSON in this exact format:
         "suggestions": suggestions,
         "original_answer": original_answer if not validated else None,
         "validation_errors": last_errors if not validated else [],
-        "supported_phrases": supported_phrases,
+        "grounding_report": grounding_report,
     }
  
     cache_set(cache_key, result)

@@ -52,7 +52,7 @@ def parse_validation_json(raw: str):
             meta["validation"] = parsed.get("validation", "uncertain")
             meta["confidence"] = int(parsed.get("confidence", 1))
  
-            print("Parsed validation JSON successfully:")
+            print("\nParsed validation JSON successfully:")
             print("Answer text:\n" + answer_text + "\n")
             print("Meta:\n" + str(meta) + "\n")
  
@@ -84,7 +84,7 @@ Do not include any information that cannot be supported by the provided sources.
 Do NOT include any source markers like [source 1], [source 2], or numeric tags.
  
 Keep the answer short, simple, easy to read for beginners, and in Markdown.
-A total answer length of 2 - 3 sentences maximum.
+A total answer length of 3 - 4 sentences maximum.
 
 Source Excerpts:
 {source_context}
