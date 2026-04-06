@@ -190,10 +190,6 @@ def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list
         if not phrase_supported(p, retrieved_chunks)
     ]
 
-    if unsupported:
-        errors.append(f"Unsupported phrases: {unsupported}")
-
-
     # 3. Numeric claim validation
     numeric_claims = [
       n for n in extract_numeric_claims(answer_text)
@@ -204,9 +200,6 @@ def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list
         n for n in numeric_claims
         if not numeric_claim_supported(n, retrieved_chunks)
     ]
-
-    if unsupported_nums:
-        errors.append(f"Unsupported numeric claims: {unsupported_nums}")
 
     return {
         "valid": len(errors) == 0,

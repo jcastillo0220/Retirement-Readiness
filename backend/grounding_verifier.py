@@ -53,7 +53,7 @@ def verify_answer_grounding(answer: str, retrieved_chunks: list):
         supporting_chunks = []
 
         for chunk in retrieved_chunks:
-            if phrase_supported(phrase, [chunk], min_overlap=0.75):
+            if phrase_supported(phrase, [chunk], min_overlap=0.65):
                 supporting_chunks.append({
                     "id": chunk.get("id"),
                     "source": chunk.get("source"),

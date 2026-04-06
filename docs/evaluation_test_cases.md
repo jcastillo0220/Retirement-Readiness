@@ -1,8 +1,8 @@
 # Retirement Readiness Evaluation Starter Kit
 
-| # | User Query | Expected Source Document | Retrieved Documents | Generated Answer | Grounding Accuracy | Refusal Accuracy |
+| # | User Query | Expected Source Document | Retrieved Documents | Generated Answer | Refusal Accuracy | Grounding Accuracy |
 |---|------------|---------------------------|----------------------|-------------------|------------------|------------------|
-| 1 | What is a Roth IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Roth IRA allows eligible individuals to make contributions that are not tax-deductible. The main benefit is that qualified distributions from a Roth IRA are received income-tax-free, provided certain conditions are met, such as the account being open for at least five years. | Pass | 
+| 1 | What is a Roth IRA? | Expected: Northwestern Mutual PDF & IRS | Northwestern Mutual PDF & IRS — Roth Ira | A Roth IRA allows eligible individuals to make contributions that are not tax-deductible. The main benefit is that qualified distributions from a Roth IRA are received income-tax-free, provided certain conditions are met, such as the account being open for at least five years. | Pass | 
 | 2 | How do taxesd work in a Roth IRA? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF |You contribute money to a Roth IRA after you've already paid taxes on it. Your investments can grow tax-free, and when you make qualified withdrawals in retirement, they are also completely tax-free. | Pass | 
 | 3 | What are qualified withdrawals? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | I could not find a verified source for that question, so I can’t provide a grounded answer right now. | Fail | 
 | 4 | What are contribution limits? | Expected Northwestern Mutual PDF | Northwestern Mutual PDF | AThe Roth IRA contribution limit is typically set annually by the IRS. For 2024, you can contribute up to $7,000. If you are age 50 or older, you may contribute an additional $1,000, bringing your total to $8,000. | Pass |
