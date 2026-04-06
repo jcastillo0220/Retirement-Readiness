@@ -271,8 +271,7 @@ def retrieve_definition_chunks(topic: str):
 def retrieve_numeric_chunks(topic: str):
     """
     For numeric / rules questions: pull from Fidelity (practical rules) AND
-    IRS (official numbers), merged together. Northwestern Mutual PDF is added
-    as a fallback if the other two sources are thin.
+    IRS (official numbers), merged together.
     """
     topic = (topic or "").lower()
     section = TOPIC_MAP.get(topic)
@@ -298,11 +297,6 @@ def retrieve_numeric_chunks(topic: str):
         irs_results = [_with_type(c) for c in _top_scored(IRS_CHUNKS, topic, n=2)]
  
     merged = fidelity_results + irs_results
- 
-    # ── Fallback: add Northwestern Mutual PDF if merged is thin ───────────
-    if len(merged) < 3:
-        pdf_fallback = [_with_type(c) for c in _top_scored(PDF_CHUNKS, topic, n=2)]
-        merged += pdf_fallback
  
     # Final safety fallback — never return empty
     if not merged:

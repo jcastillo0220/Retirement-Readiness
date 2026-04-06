@@ -84,7 +84,7 @@ Do not include any information that cannot be supported by the provided sources.
 Do NOT include any source markers like [source 1], [source 2], or numeric tags.
  
 Keep the answer short, simple, easy to read for beginners, and in Markdown.
-A total answer length of 3 - 4 sentences maximum.
+A total answer length of 2 - 3 sentences maximum.
 
 Source Excerpts:
 {source_context}

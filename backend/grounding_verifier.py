@@ -9,7 +9,8 @@ def extract_key_phrases(answer: str):
     phrases = re.findall(r"\b([A-Za-z][A-Za-z ]{6,})\b", answer or "")
     stopwords = {
         "the", "and", "or", "but", "if", "a", "an", "to", "of", "in", "on",
-        "for", "with", "this", "that", "your"
+        "for", "with", "this", "that", "your", "is", "are", "was", "were", "be", 
+        "by", "as", "at", "from", "it", "its", "they", "them", "their"
     }
 
     cleaned = []
@@ -29,7 +30,7 @@ def extract_key_phrases(answer: str):
     return cleaned[:20]
 
 
-def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0.75):
+def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0.50):
     phrase_words = set(normalize_words(phrase))
     if not phrase_words:
         return False
