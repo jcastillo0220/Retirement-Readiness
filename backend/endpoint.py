@@ -225,9 +225,8 @@ async def generate(req: Request):
 You are a retirement assistant.
  
 Use the provided source excerpts below to answer the question.
-Use the provided sources whenever relevant.
+Only Use the provided sources.
 Do NOT include any source markers like [source 1], [source 2], or numeric tags.
-If the sources do not fully support the answer, you may use general financial knowledge to provide a helpful answer.
  
 Keep the answer short, simple, easy to read for beginners, and in Markdown.
 A total answer length of 2 - 3 sentences maximum.
@@ -312,9 +311,10 @@ After the answer, output one final line of JSON in this exact format:
             label=label
         )
 
+    answer_body, meta = parse_validation_json(answer_body)
     suggestions = generate_suggestions(answer_body, topic_key=topic_key)
     grounding_report = verify_answer_grounding(answer_body, retrieved_chunks)
-
+    print("number of retrieved chunks:", len(retrieved_chunks))
  
     result = {
         "answer": final_answer,
