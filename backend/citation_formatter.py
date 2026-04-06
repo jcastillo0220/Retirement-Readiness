@@ -77,4 +77,4 @@ def format_with_citations(answer: str, retrieved_chunks: list):
     # -----------------------------
     full_answer = f"{citation_line}\n\n{answer.strip()}\n\n{sources_block}"
 
-    return full_answer, citation_map, citation_line, answer, sources_block
+    return full_answer, citation_map, citation_line, answer.strip(), sources_block

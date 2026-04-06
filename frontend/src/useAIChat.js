@@ -105,7 +105,6 @@ export function useAIChat() {
       const { projection, explanation, answer, citation, answer_body, sources } = res;
 
       setAnswer(answer || explanation || "");
-      setSupportedPhrases([]);
       setValidated(true);
       setOriginalAnswer(null);
 

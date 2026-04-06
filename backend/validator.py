@@ -97,6 +97,56 @@ Rules:
 - End with one final JSON line in this exact format:
 {{"validation":"valid","confidence":4}}
 """.strip()
+
+def build_repair_prompt_scenario(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
+    issues = "\n".join(f"- {reason}" for reason in repair_reasons) if repair_reasons else "- General failure"
+ 
+    return f"""
+Fix the answer below.
+ 
+Question:
+{user_question}
+ 
+Bad Answer:
+{bad_answer}
+ 
+Issues:
+{issues}
+ 
+You are a retirement assistant.
+
+Use the provided source excerpts below to explain the scenario.
+Use the provided sources whenever relevant.
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
+Do NOT invent citations — the system will add them automatically.
+
+Keep the answer short, simple, and easy to read.
+Use clear spacing and short sections.
+Make the explanation simple, clear, and condensed.
+
+Your output MUST follow this structure:
+
+Explanation of Projection
+- Write 2–3 sentences explaining what the projection means.
+- You ARE allowed to use the deterministic values provided (age, years to grow, projected balance, return rate).
+- Do NOT calculate anything yourself.
+
+Explanation of Inputs
+- For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate),
+ write a short, simple sentence explaining what that input represents.
+- Keep each line concise.
+
+Source Excerpts:
+{source_context}
+ 
+Rules:
+- Keep it simple
+- Stay accurate
+- Prefer the provided sources when relevant
+- No hallucinations
+- End with one final JSON line in this exact format:
+{{"validation":"valid","confidence":4}}
+""".strip()
  
  
 def extract_numbers(text):
