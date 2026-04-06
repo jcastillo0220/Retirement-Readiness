@@ -58,3 +58,37 @@ def verify_answer_grounding(answer: str, retrieved_chunks: list):
       })
 
     return report
+
+def extract_numeric_claims(text: str):
+    # Matches: $5000, 5000, 5%, 59.5, 59½, age 59, age 59½
+    return re.findall(r"\$?\d+(?:\.\d+)?%?", text or "")
+
+def numeric_claim_supported(num: str, retrieved_chunks: list):
+    for chunk in retrieved_chunks:
+        if num in chunk.get("text", ""):
+            return True
+    return False
+
+def is_financial_number(n: str):
+    # Dollar amounts
+    if "$" in n:
+        return True
+
+    # Percentages
+    if n.endswith("%"):
+        return True
+
+    # Ages (59, 59.5, 59½, 70½)
+    try:
+        val = float(n.replace("½", ".5"))
+        if 18 <= val <= 75:
+            return True
+    except:
+        pass
+
+    # Common contribution limits
+    common_limits = {500, 1000, 6500, 7000, 22000, 30000}
+    if n.isdigit() and int(n) in common_limits:
+        return True
+
+    return False
