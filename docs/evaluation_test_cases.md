@@ -16,9 +16,9 @@
 | 12 | What is a Rollover IRA? | Expected: Northwestern Mutual PDF & IRS | Northwestern Mutual PDF & IRS - Rollover Ira | A Traditional Rollover IRA is identified as a type of individual retirement plan. It is associated with the concept of rollovers, which involve moving retirement plan and IRA distributions between different plans. | Pass | 33%
 | 13 | How do taxes work in a Rollover IRA? | Expected: Northwestern Mutual PDF & IRS | Northwestern Mutual PDF & IRS - Rollover Ira | A Rollover IRA typically allows your investments to grow without immediate taxation, meaning growth is tax-deferred. However, when funds are transferred, some amounts might need to be included in your income if they are not rolled over according to specific rules. | Pass | 25%
 | 14 | When to use a Rollover IRA? | Expected: Northwestern Mutual PDF & IRS | Northwestern Mutual PDF & IRS - Rollover Ira | A Rollover IRA is an individual retirement plan designed to receive funds from other retirement accounts. People typically use it when moving money from an employer-sponsored plan, such as a 401(k) or 403(b), into their own individual retirement arrangement. | Pass | 50%
-| 15 | What is a Roth 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Roth 401(k) is an employer-sponsored retirement plan, also known as a Designated Roth Account, that allows you to contribute money after taxes. While contributions are not tax-deductible, your qualified withdrawals in retirement are entirely tax-free. | Pass |
-| 16 | Roth 401(k) vs Roth IRA | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | A Roth 401(k) is an employer-sponsored retirement plan, while a Roth IRA is an individual retirement account you open on your own. Roth 401(k)s generally have higher contribution limits and no income phase-outs for contributions, which can apply to Roth IRAs. | Pass |
-| 17 | How do taxes work in a Roth 401(k)? | Expected: Northwestern Mutual PDF | Northwestern Mutual PDF | With a Roth 401(k), you contribute money after it has already been taxed from your paycheck. This allows your investments to grow completely tax-free, and qualified withdrawals in retirement are also tax-free. | Pass |
+| 15 | What is a Roth 401(k)? | Expected: Fidelity & IRS | Fidelity - Roth 401k & IRS - Roth 401k | A Roth 401(k) is an employer-sponsored retirement plan, also known as a Designated Roth Account, that allows you to contribute money after taxes. While contributions are not tax-deductible, your qualified withdrawals in retirement are entirely tax-free. | Pass | 16.6%
+| 16 | Roth 401(k) vs Roth IRA | Expected: Fidelity & IRS | Fidelity - Roth 401k & IRS - Roth 401kF | A Roth 401(k) is an employer-sponsored retirement plan, while a Roth IRA is an individual retirement account you open on your own. Roth 401(k)s generally have higher contribution limits and no income phase-outs for contributions, which can apply to Roth IRAs. | Pass | 100%
+| 17 | How do taxes work in a Roth 401(k)? | Expected: Fidelity & IRS | Fidelity - Roth 401k & IRS - Roth 401k | With a Roth 401(k), you contribute money after it has already been taxed from your paycheck. This allows your investments to grow completely tax-free, and qualified withdrawals in retirement are also tax-free. | Pass | 0% |
 
 
 # Scenario Test Cases
@@ -31,9 +31,9 @@
 
 # Required Metrics
 
-| Retriveal Accuracy | Citation Coverage | Grounding Accuracy | Halluication Rate | Refusal Accuracy |
+| Retrieval Accuracy | Citation Coverage | Grounding Accuracy | Halluication Rate | Refusal Accuracy |
 |--------------------|-------------------|---------------------|------------------|---------------------|
-| 100% | 100% | 85% | 5% | 100% |
+| 94% | 100% | 48.3% | 15% | 100% |
 
 # Metrics Explanation 
 **Retrieval Accuracy**
