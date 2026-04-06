@@ -479,13 +479,16 @@ Provided Sources:
         raw_answer_clean, meta = parse_validation_json(raw_answer_clean)
         print("Final cited answer:", raw_answer_clean)
 
+        verify_answer_grounding1, meta = verify_answer_grounding(raw_answer_clean, retrieved_chunks)
+
         return {
             "projection": projection,      # deterministic math
             "citation": citation_line,  # human-readable source list  
             "answer_body": raw_answer_clean,   # LLM explanation with citations
             "explanation": raw_explanation,  # original LLM explanation of the math
             "sources": sources_block,        # Formatted sources block
-            "citations": citation_map      # Fidelity grounding
+            "citations": citation_map,      # Fidelity grounding
+            "grounding_report": verify_answer_grounding1
         }
 
     except KeyError as e:
