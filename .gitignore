@@ -2,7 +2,6 @@
 # ENVIRONMENT / SECRETS
 # =========================
 .env
-.env.*
 backend/.env
 frontend/.env
 
