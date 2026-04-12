@@ -1,6 +1,5 @@
 import json
 import re
-from grounding_verifier import extract_key_phrases, extract_numeric_claims, is_financial_number, numeric_claim_supported, phrase_supported
 from extract_citation_phrases import extract_citation_phrases
  
  
@@ -52,7 +51,7 @@ def parse_validation_json(raw: str):
             meta["validation"] = parsed.get("validation", "uncertain")
             meta["confidence"] = int(parsed.get("confidence", 1))
  
-            print("\nParsed validation JSON successfully:")
+            print("Parsed validation JSON successfully:")
             print("Answer text:\n" + answer_text + "\n")
             print("Meta:\n" + str(meta) + "\n")
  
@@ -63,102 +62,46 @@ def parse_validation_json(raw: str):
     return raw.strip(), meta
  
  
-def build_repair_prompt(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
-    issues = "\n".join(f"- {reason}" for reason in repair_reasons) if repair_reasons else "- General failure"
+def build_repair_prompt(answer, question, errors=None):
+    error_text = "\n".join(f"- {e}" for e in errors) if errors else "General failure"
  
     return f"""
 Fix the answer below.
  
 Question:
-{user_question}
+{question}
  
 Bad Answer:
-{bad_answer}
+{answer}
  
 Issues:
-{issues}
- 
-Make sure to use only the souces provided below to answer the question. 
-Do not include any information that cannot be supported by the provided sources.
- 
-Do NOT include any source markers like [source 1], [source 2], or numeric tags.
- 
-Keep the answer short, simple, easy to read for beginners, and in Markdown.
-A total answer length of 2 - 3 sentences maximum.
-
-Source Excerpts:
-{source_context}
+{error_text}
  
 Rules:
 - Keep it simple
 - Stay accurate
-- Prefer the provided sources when relevant
+- Use only provided sources
 - No hallucinations
-- End with one final JSON line in this exact format:
-{{"validation":"valid","confidence":4}}
-""".strip()
-
-def build_repair_prompt_scenario(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
-    issues = "\n".join(f"- {reason}" for reason in repair_reasons) if repair_reasons else "- General failure"
  
-    return f"""
-Fix the answer below.
- 
-Question:
-{user_question}
- 
-Bad Answer:
-{bad_answer}
- 
-Issues:
-{issues}
- 
-You are a retirement assistant.
-
-Use the provided source excerpts below to explain the scenario.
-Use the provided sources whenever relevant.
-Do NOT include any source markers like [source 1], [source 2], or numeric tags.
-Do NOT invent citations — the system will add them automatically.
-
-Keep the answer short, simple, and easy to read.
-Use clear spacing and short sections.
-Make the explanation simple, clear, and condensed.
-
-Your output MUST follow this structure:
-
-Explanation of Projection
-- Write 2–3 sentences explaining what the projection means.
-- You ARE allowed to use the deterministic values provided (age, years to grow, projected balance, return rate).
-- Do NOT calculate anything yourself.
-
-Explanation of Inputs
-- For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate),
- write a short, simple sentence explaining what that input represents.
-- Keep each line concise.
-
-Source Excerpts:
-{source_context}
- 
-Rules:
-- Keep it simple
-- Stay accurate
-- Prefer the provided sources when relevant
-- No hallucinations
-- End with one final JSON line in this exact format:
-{{"validation":"valid","confidence":4}}
+Return:
+Answer + JSON validation at end
 """.strip()
  
  
-def extract_numbers(text):
+def extract_numbers(text: str) -> list:
+    """Extract all numeric values (with optional $ prefix and commas) from text."""
     return re.findall(r"\$?\d[\d,]*(?:\.\d+)?", text)
  
  
-def normalize(num):
+def normalize_number(num: str) -> str:
+    """Strip $ and commas so 7,000 and $7000 both become 7000."""
     return num.replace("$", "").replace(",", "")
  
  
 def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list):
     errors = []
+ 
+    # 1. Citation format checks
     phrases = extract_citation_phrases(answer_text)
  
     if not phrases:
@@ -166,42 +109,42 @@ def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list
  
     for phrase in phrases:
  
-        # 1. Format validation
         if not phrase.startswith("According to"):
-            return {"valid": False, "errors": ["Citation must start with 'According to'"]}
+            errors.append("Citation must start with \'According to\'")
+            continue
  
-        # 2. Normalise — strips markdown links down to plain source names
+        if "(" not in phrase or ")" not in phrase:
+            errors.append("Citation must include a Markdown link")
+            continue
+ 
         normalized = normalize_phrase(phrase)
  
-        # 3. Check every source name in the citation is a known retrieved source
         if not all_sources_known(normalized, retrieved_chunks):
-            return {"valid": False, "errors": ["Citation refers to unknown source"]}
+            errors.append("Citation refers to unknown source")
+            continue
  
-        # 4. Ensure the primary source from citation_map is present
         primary_source = citation_map.get("main", {}).get("source", "").lower()
         if primary_source and primary_source not in normalized:
-            return {"valid": False, "errors": ["Citation does not match primary source"]}
+            errors.append("Citation does not match primary source")
  
-    # 2. Phrase-level grounding
-    phrases = extract_key_phrases(answer_text)
-
-    unsupported = [
-        p for p in phrases
-        if not phrase_supported(p, retrieved_chunks)
-    ]
-
-    # 3. Numeric claim validation
-    numeric_claims = [
-      n for n in extract_numeric_claims(answer_text)
-      if is_financial_number(n)
-    ]
-
-    unsupported_nums = [
-        n for n in numeric_claims
-        if not numeric_claim_supported(n, retrieved_chunks)
-    ]
-
-    return {
-        "valid": len(errors) == 0,
-        "errors": errors
-    }
+    # 2. Numeric cross-check
+    answer_nums = {normalize_number(n) for n in extract_numbers(answer_text)}
+ 
+    if answer_nums:
+        chunk_nums = set()
+        for chunk in retrieved_chunks:
+            for n in extract_numbers(chunk.get("text", "")):
+                chunk_nums.add(normalize_number(n))
+ 
+        unsupported_nums = answer_nums - chunk_nums
+ 
+        if unsupported_nums and chunk_nums:
+            errors.append(
+                "Answer contains numbers not found in source chunks: "
+                + ", ".join(sorted(unsupported_nums))
+            )
+ 
+    if errors:
+        return {"valid": False, "errors": errors}
+ 
+    return {"valid": True, "errors": []}

@@ -3,13 +3,13 @@ import re
 import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
-
+ 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 import google.generativeai as genai
-
+ 
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
 from validator import parse_validation_json, validate_answer
@@ -22,8 +22,8 @@ from chunking import (
 )
 from citation_formatter import format_with_citations
 from grounding_verifier import verify_answer_grounding
-
-
+ 
+ 
 # ============================
 # LOGGING
 # ============================
@@ -32,26 +32,26 @@ logging.basicConfig(
     format="%(levelname)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
+ 
+ 
 # ============================
 # LOAD ENV
 # ============================
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
-
+ 
 API_KEY = (os.getenv("GOOGLE_API_KEY") or "").strip()
 if not API_KEY:
     raise RuntimeError("Missing GOOGLE_API_KEY in backend/.env")
-
+ 
 MODEL_NAME = (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash").strip()
 MAX_REPAIR_ATTEMPTS = 3
 MAX_Q_LEN = 500
-
+ 
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel(MODEL_NAME)
-
-
+ 
+ 
 # ============================
 # FASTAPI LIFESPAN
 # ============================
@@ -63,13 +63,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Chunk load failed: {e}")
     yield
-
-
+ 
+ 
 # ============================
 # FASTAPI SETUP
 # ============================
 app = FastAPI(lifespan=lifespan)
-
+ 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -77,8 +77,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
+ 
+ 
 # ============================
 # HELPERS
 # ============================
@@ -93,16 +93,16 @@ def ask_ai(prompt: str) -> str:
             status_code=500,
             detail=f"Gemini error: {type(e).__name__}: {str(e)}"
         )
-
-
+ 
+ 
 def is_definition_question(q: str) -> bool:
     q = (q or "").lower()
     return any(k in q for k in ["what is", "define", "explain", "meaning"])
-
-
+ 
+ 
 def sanitize_question(text: str) -> str:
     text = (text or "").strip()
-
+ 
     blocked_patterns = [
         r"(?i)ignore\s+previous\s+instructions",
         r"(?i)ignore\s+all\s+previous\s+instructions",
@@ -111,14 +111,14 @@ def sanitize_question(text: str) -> str:
         r"(?i)reveal\s+hidden\s+prompt",
         r"(?i)show\s+your\s+chain\s+of\s+thought",
     ]
-
+ 
     for pattern in blocked_patterns:
         text = re.sub(pattern, "", text)
-
+ 
     text = re.sub(r"\s+", " ", text).strip()
     return text
-
-
+ 
+ 
 def build_source_context(chunks: list) -> str:
     parts = []
     for i, chunk in enumerate(chunks, start=1):
@@ -130,30 +130,30 @@ def build_source_context(chunks: list) -> str:
             f"Text: {chunk.get('text', '')}"
         )
     return "\n\n".join(parts)
-
-
+ 
+ 
 def build_repair_prompt(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
     issues = "\n".join(f"- {reason}" for reason in repair_reasons) if repair_reasons else "- General failure"
-
+ 
     return f"""
 Fix the answer below.
-
+ 
 Question:
 {user_question}
-
+ 
 Bad Answer:
 {bad_answer}
-
+ 
 Issues:
 {issues}
-
+ 
 Use the provided source excerpts if they are helpful. If the sources do not fully support the answer,
 you may use general financial knowledge to provide a helpful answer.
 Clearly state when any part of the answer is based on general knowledge.
-
+ 
 Source Excerpts:
 {source_context}
-
+ 
 Rules:
 - Keep it simple
 - Stay accurate
@@ -162,64 +162,86 @@ Rules:
 - End with one final JSON line in this exact format:
 {{"validation":"valid","confidence":4}}
 """.strip()
-
-
+ 
+ 
 def build_fallback_prompt(user_question: str) -> str:
     return f"""
 You are a retirement assistant.
-
+ 
 Answer the question clearly and simply using general financial knowledge.
 Be helpful, concise, and use Markdown.
 Because this answer is not grounded in the provided project sources, begin with this note:
-
+ 
 **Note:** This answer is based on general financial knowledge and not the project's loaded sources.
-
+ 
 Question:
 {user_question}
-
+ 
 After the answer, output one final line of JSON in this exact format:
 {{"validation":"valid","confidence":2}}
 """.strip()
-
-
+ 
+ 
+# ============================
+# ANSWER CLEANING
+# ============================
+def strip_source_links(answer: str) -> str:
+    """
+    Remove any inline [Source N](url) or [Source N] references that
+    Gemini writes when it sees numbered source blocks. These produce
+    broken or duplicate links because all Gemini-generated source
+    links point to the same chunk URL. Our citation_formatter handles
+    all attribution — the answer body should contain no inline links.
+    """
+    # Remove [Source N](url) markdown links
+    pattern_link = r"\[Source\s+\d+\]\([^)]*\)"
+    # Remove bare [Source N] references
+    pattern_bare = r"\[Source\s+\d+\]"
+    answer = re.sub(pattern_link, "", answer)
+    answer = re.sub(pattern_bare, "", answer)
+    # Clean up any double spaces left behind
+    answer = re.sub(r"  +", " ", answer)
+    return answer.strip()
+ 
+ 
 # ============================
 # ROUTES
 # ============================
 @app.get("/health")
 def health():
     return {"status": "ok", "model": MODEL_NAME}
-
-
+ 
+ 
 @app.get("/pdf/retirement-overview")
 async def get_pdf():
     pdf_path = BASE_DIR.parent / "docs" / "data_sources" / "Retirement Plan Overview.pdf"
-
+ 
     if not pdf_path.exists():
         raise HTTPException(status_code=404, detail="PDF file not found.")
-
+ 
     return FileResponse(str(pdf_path), media_type="application/pdf")
-
-
+ 
+ 
 # ============================
 # MAIN AI ENDPOINT
 # ============================
 @app.post("/api/ai/generate")
 async def generate(req: Request):
     data = await req.json()
-
+ 
     user_question = sanitize_question(data.get("question") or "")
     topic_key = data.get("topicKey") or data.get("topic_key") or "definitions"
     label = data.get("label")
-
+ 
     if not user_question:
         raise HTTPException(status_code=400, detail="Missing 'question'.")
-
+ 
     if len(user_question) > MAX_Q_LEN:
         raise HTTPException(
             status_code=400,
             detail=f"Question too long (max {MAX_Q_LEN} chars)."
         )
-
+ 
     # ============================
     # 0. OUT-OF-SCOPE REFUSAL
     # ============================
@@ -243,12 +265,12 @@ async def generate(req: Request):
             "cached": False,
             "label_used": label,
         }
-
+ 
     cache_key = make_cache_key(user_question, topic_key)
     cached = cache_get(cache_key)
     if cached:
         return {**cached, "cached": True, "label_used": label}
-
+ 
     # ============================
     # 1. RETRIEVE CHUNKS
     # ============================
@@ -256,14 +278,14 @@ async def generate(req: Request):
         retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:
         retrieved_chunks = retrieve_numeric_chunks(topic_key)
-
+ 
     # ============================
     # 1A. FALLBACK IF NO CHUNKS
     # ============================
     if not retrieved_chunks:
         fallback_raw = ask_ai(build_fallback_prompt(user_question))
         fallback_answer, meta = parse_validation_json(fallback_raw)
-
+ 
         result = {
             "answer": fallback_answer,
             "validated": False,
@@ -273,12 +295,12 @@ async def generate(req: Request):
             "validation_errors": ["Fallback used: no project sources were retrieved."],
             "supported_phrases": [],
         }
-
+ 
         cache_set(cache_key, result)
         return {**result, "cached": False, "label_used": label}
-
+ 
     source_context = build_source_context(retrieved_chunks)
-
+ 
     # ============================
     # 2. PRIMARY PROMPT
     # ============================
@@ -287,34 +309,36 @@ async def generate(req: Request):
         c.get("source", "Unknown") for c in retrieved_chunks
     ))
     source_list_str = ", ".join(source_names)
-
+ 
     single_prompt = f"""
 You are a retirement assistant helping people understand retirement accounts.
-
+ 
 You have been given excerpts from {len(source_names)} trusted source(s): {source_list_str}.
-
+ 
 Use ALL of the provided source excerpts to answer the question as accurately as possible.
 Where different sources provide complementary information (e.g. Fidelity explains the concept,
 IRS confirms the official limit), combine them into a single clear answer.
-
+ 
 If the sources do not fully support the answer, you may use general financial knowledge,
 but clearly state that part is based on general knowledge.
-
+ 
 Keep the answer short, simple, and in Markdown.
-Do NOT include citation lines in your answer — citations are added automatically.
-
+Do NOT include any citation lines, inline source links, or [Source N] references in your answer.
+Do NOT write any markdown links at all — no [text](url) syntax anywhere in your answer.
+Citations and source links are added automatically after your answer is received.
+ 
 Question:
 \"\"\"{user_question}\"\"\"
-
+ 
 Provided Sources:
 {source_context}
-
+ 
 After the answer, output one final line of JSON in this exact format:
 {{"validation":"valid","confidence":4}}
 """.strip()
-
+ 
     current_raw = ask_ai(single_prompt)
-
+ 
     # ============================
     # 3. VALIDATION / REPAIR LOOP
     # ============================
@@ -326,55 +350,59 @@ After the answer, output one final line of JSON in this exact format:
     citation_line = ""
     answer_body = ""
     sources_block = ""
-
+ 
     for attempt in range(1, MAX_REPAIR_ATTEMPTS + 1):
         answer_text, meta = parse_validation_json(current_raw)
         final_confidence = meta.get("confidence")
-
+ 
         if original_answer is None:
             original_answer = answer_text
-
+ 
         model_bad = meta.get("validation") in ["invalid", "uncertain"]
-
+ 
+        # Strip any [Source N](url) inline links Gemini may have written —
+        # our citation formatter adds all attribution after this step.
+        clean_answer_text = strip_source_links(answer_text)
+ 
         answer_with_citations, citation_map, citation_line, answer_body, sources_block = format_with_citations(
-            answer_text,
+            clean_answer_text,
             retrieved_chunks
         )
-
+ 
         validation = validate_answer(
             answer_with_citations,
             citation_map,
             retrieved_chunks
         )
-
+ 
         if not model_bad and validation["valid"]:
             validated = True
             final_answer = answer_with_citations
             break
-
+ 
         repair_reasons = []
-
+ 
         if model_bad:
             repair_reasons.append("Model flagged answer as invalid/uncertain")
-
+ 
         if not validation["valid"]:
             repair_reasons.extend(validation.get("errors", []))
-
+ 
         last_errors = repair_reasons
         final_answer = answer_with_citations
-
+ 
         if attempt == MAX_REPAIR_ATTEMPTS:
             break
-
+ 
         repair_prompt = build_repair_prompt(
             user_question=user_question,
             bad_answer=answer_text,
             repair_reasons=repair_reasons,
             source_context=source_context,
         )
-
+ 
         current_raw = ask_ai(repair_prompt)
-
+ 
     # ============================
     # 3A. FINAL FALLBACK IF RESULT STILL WEAK
     # ============================
@@ -382,17 +410,17 @@ After the answer, output one final line of JSON in this exact format:
         not final_answer.strip()
         or "Not found in provided sources" in final_answer
     )
-
+ 
     if weak_final:
         fallback_raw = ask_ai(build_fallback_prompt(user_question))
         fallback_answer, meta = parse_validation_json(fallback_raw)
-
+ 
         final_answer = fallback_answer
         final_confidence = meta.get("confidence", 2)
         validated = False
         last_errors = ["Fallback used: retrieved sources were not sufficient for a helpful answer."]
         original_answer = None
-
+ 
         result = {
             "answer": final_answer,
             "validated": validated,
@@ -402,45 +430,84 @@ After the answer, output one final line of JSON in this exact format:
             "validation_errors": last_errors,
             "supported_phrases": [],
         }
-
+ 
         cache_set(cache_key, result)
         return {**result, "cached": False, "label_used": label}
-
+ 
     # ============================
     # 4. POST-VALIDATION / RETURN
     # ============================
     suggestions = generate_suggestions(final_answer, topic_key=topic_key)
-    grounding_report = verify_answer_grounding(final_answer, retrieved_chunks)
-
+ 
+    # verify_answer_grounding always returns a list — guard against None
+    # in case of unexpected return from older or patched versions.
+    grounding_report = verify_answer_grounding(final_answer, retrieved_chunks) or []
+ 
     supported_phrases = [
-        g["phrase"] for g in grounding_report if g.get("supported")
+        g["phrase"] for g in grounding_report
+        if isinstance(g, dict) and g.get("supported")
     ]
-
+ 
+    # ============================
+    # 4A. GROUNDING REFUSAL CHECK
+    # If fewer than 40% of extracted phrases are supported by the
+    # retrieved chunks, the answer is not grounded well enough to
+    # present to the user. Return a clean refusal instead of a
+    # "Corrected" answer that leaks internal repair state.
+    # ============================
+    if grounding_report:
+        grounding_rate = len(supported_phrases) / len(grounding_report)
+        if grounding_rate < 0.40:
+            refusal_msg = (
+                "I can only answer questions grounded in the sources I've been given. "
+                "That one falls outside what I can verify. "
+                "Try asking about a specific retirement account type — like a Roth IRA, "
+                "401(k), or Traditional IRA — and I'll do my best to help."
+            )
+            refusal_result = {
+                "answer": refusal_msg,
+                "citation": "",
+                "answer_body": refusal_msg,
+                "sources": "",
+                "validated": False,
+                "is_refusal": True,
+                "confidence": 0,
+                "suggestions": suggestions,
+                "original_answer": None,
+                "validation_errors": [
+                    f"Grounding rate too low ({grounding_rate:.0%}) — refusal returned."
+                ],
+                "supported_phrases": [],
+            }
+            cache_set(cache_key, refusal_result)
+            return {**refusal_result, "cached": False, "label_used": label}
+ 
     result = {
         "answer": final_answer,
         "citation": citation_line,
         "answer_body": answer_body,
         "sources": sources_block,
         "validated": validated,
+        "is_refusal": False,
         "confidence": final_confidence,
         "suggestions": suggestions,
         "original_answer": original_answer if not validated else None,
         "validation_errors": last_errors if not validated else [],
         "supported_phrases": supported_phrases,
     }
-
+ 
     cache_set(cache_key, result)
-
+ 
     return {**result, "cached": False, "label_used": label}
-
-
+ 
+ 
 # ============================
 # SCENARIO ENDPOINT
 # ============================
 @app.post("/api/scenario")
 async def scenario(req: Request):
     data = await req.json()
-
+ 
     try:
         projection, explanation = compute_projection(
             age=int(data["age"]),
@@ -450,24 +517,24 @@ async def scenario(req: Request):
             monthly_contribution=float(data["monthly_contribution"]),
             return_rate=float(data.get("return_rate", 0.035)),
         )
-
+ 
         return {
             "projection": projection,
             "explanation": explanation,
         }
-
+ 
     except KeyError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Missing required field: {e.args[0]}"
         )
-
+ 
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid scenario input: {str(e)}"
         )
-
+ 
     except Exception as e:
         logger.exception("Scenario endpoint failed")
         raise HTTPException(

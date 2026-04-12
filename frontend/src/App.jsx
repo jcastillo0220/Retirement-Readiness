@@ -27,6 +27,10 @@ import {
 export default function AIChat() {
   const {
     answer,
+    citation,
+    answerBody,
+    sources,
+    isRefusal,
     suggestedButtons,
     loading,
     selectedQuestion,
@@ -34,11 +38,13 @@ export default function AIChat() {
     originalAnswer,
     error,
     history,
+    supported_phrases,
     activeTopicKey,
     handleAsk,
     handleScenario,
   } = useAIChat();
 
+  const [userQ, setUserQ] = useState("");
   const [status, setStatus] = useState("checking");
 
   useEffect(() => {
@@ -55,12 +61,37 @@ export default function AIChat() {
     { label: "What is a Roth 401(k)?", prompt: "What is a Roth 401(k)?", key: "roth_401k" },
   ];
 
-  const latestItem = history.length ? history[history.length - 1] : null;
-  const olderHistory = history.length > 1 ? history.slice(0, -1) : [];
+  // Detect topic key from free-text question so numeric questions
+  // are routed to the correct retrieval pipeline instead of always
+  // defaulting to "definitions" (which only searches the PDF).
+  function detectTopicKey(q) {
+    const lower = q.toLowerCase();
+    if (lower.includes("roth 401") || lower.includes("roth401")) return "roth_401k";
+    if (lower.includes("rollover")) return "rollover_ira";
+    if (lower.includes("traditional ira") || lower.includes("traditional")) return "traditional_ira";
+    if (lower.includes("roth ira") || lower.includes("roth")) return "roth_ira";
+    if (lower.includes("401(k)") || lower.includes("401k")) return "401k";
+    if (lower.includes("compound interest") || lower.includes("compound")) return "compound_interest";
+    // Default to definitions for "what is" style questions, otherwise use roth_ira
+    // as a broad fallback that has the most general retirement content
+    if (lower.includes("what is") || lower.includes("define") || lower.includes("explain")) {
+      return "definitions";
+    }
+    return "definitions";
+  }
+
+  function handleSendCustomQuestion() {
+    const trimmed = userQ.trim();
+    if (!trimmed) return;
+    const topicKey = detectTopicKey(trimmed);
+    handleAsk(trimmed, topicKey, trimmed);
+    setUserQ("");
+  }
 
   return (
     <div style={containerStyle}>
       <div style={shellStyle}>
+        {/* Header */}
         <div style={headerStyle}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <img
@@ -102,6 +133,7 @@ export default function AIChat() {
           </div>
         </div>
 
+        {/* Main Topic Buttons */}
         <TopicButtons
           buttons={topic_buttons}
           loading={loading}
@@ -111,6 +143,46 @@ export default function AIChat() {
           buttonRowStyle={buttonRowStyle}
         />
 
+        {/* Free-text input */}
+        <div style={{ display: "flex", gap: 10, padding: "0 6px" }}>
+          <input
+            value={userQ}
+            onChange={(e) => setUserQ(e.target.value)}
+            placeholder="Ask anything..."
+            disabled={loading}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSendCustomQuestion();
+            }}
+            style={{
+              flex: 1,
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#EAF0FF",
+              outline: "none",
+              fontSize: 14,
+            }}
+          />
+          <button
+            onClick={handleSendCustomQuestion}
+            disabled={loading || !userQ.trim()}
+            style={{
+              padding: "12px 16px",
+              borderRadius: 12,
+              border: "none",
+              background: "#5B8CFF",
+              color: "#fff",
+              fontWeight: 600,
+              cursor: loading || !userQ.trim() ? "not-allowed" : "pointer",
+              opacity: loading || !userQ.trim() ? 0.6 : 1,
+            }}
+          >
+            Send
+          </button>
+        </div>
+
+        {/* Suggested follow-ups */}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "0 6px" }}>
           {!loading &&
             suggestedButtons.map((item, index) => (
@@ -124,6 +196,7 @@ export default function AIChat() {
             ))}
         </div>
 
+        {/* Scenario form */}
         <ScenarioForm onSubmit={handleScenario} loading={loading} />
 
         {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
@@ -135,16 +208,15 @@ export default function AIChat() {
           </div>
         )}
 
-        {!loading && answer && latestItem && (
+        {!loading && answer && (
           <AnswerBubble
-            answer={answer}
-            projection={latestItem.projection} 
-            citation={latestItem.citation || ""}
-            answer_body={latestItem.answer_body || ""}
-            sources={latestItem.sources || ""}
-            grounding_report={latestItem.grounding_report || []}
+            citation={citation}
+            answer={answerBody}
+            sources={sources}
             validated={validated}
+            isRefusal={isRefusal}
             originalAnswer={originalAnswer}
+            supported_phrases={supported_phrases}
             bubbleStyle={bubbleStyle}
             validatedPill={validatedPill}
             correctedPill={correctedPill}
@@ -152,7 +224,7 @@ export default function AIChat() {
         )}
 
         <HistoryList
-          history={olderHistory}
+          history={history}
           bubbleStyle={bubbleStyle}
           validatedPill={validatedPill}
           correctedPill={correctedPill}
