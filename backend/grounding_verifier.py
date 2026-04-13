@@ -126,7 +126,7 @@ def extract_key_phrases(answer: str) -> list:
 # PHRASE SUPPORT CHECK
 # ============================================================
  
-def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0.5) -> bool:
+def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0.7) -> bool:
     """
     Check whether a phrase is supported by any retrieved chunk.
  

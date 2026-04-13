@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
  
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
@@ -48,8 +48,7 @@ MODEL_NAME = (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash").strip()
 MAX_REPAIR_ATTEMPTS = 3
 MAX_Q_LEN = 500
  
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel(MODEL_NAME)
+client = genai.Client(api_key=API_KEY)
  
  
 # ============================
@@ -84,9 +83,21 @@ app.add_middleware(
 # ============================
 def ask_ai(prompt: str) -> str:
     try:
-        resp = model.generate_content(prompt)
-        text = getattr(resp, "text", "") or ""
-        return text.strip()
+        resp = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt
+        )
+        return (resp.text or "").strip()
+
+    except genai.errors.ServerError as e:
+        # New SDK uses e.code, not e.status_code
+        if e.code == 503:
+            raise HTTPException(
+                status_code=503,
+                detail="The AI model is temporarily overloaded. Please try again shortly."
+            )
+        raise
+
     except Exception as e:
         logger.exception("Gemini call failed")
         raise HTTPException(
@@ -441,7 +452,12 @@ After the answer, output one final line of JSON in this exact format:
  
     # verify_answer_grounding always returns a list — guard against None
     # in case of unexpected return from older or patched versions.
-    grounding_report = verify_answer_grounding(final_answer, retrieved_chunks) or []
+    raw = verify_answer_grounding(final_answer, retrieved_chunks)
+
+    if isinstance(raw, tuple):
+        grounding_report = raw[0] or []
+    else:
+        grounding_report = raw or []
  
     supported_phrases = [
         g["phrase"] for g in grounding_report
