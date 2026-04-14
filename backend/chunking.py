@@ -95,16 +95,19 @@ def chunk_text(text: str, source: str, section: str, url: str, max_words: int = 
         return []
 
     chunks = []
-    current = []
-
-    for word in words:
-        current.append(word)
-        if len(current) >= max_words:
-            chunks.append(" ".join(current))
-            current = []
-
-    if current:
-        chunks.append(" ".join(current))
+    
+    start = 0
+    overlap = 50
+    
+    while start < len(words):
+        end = start + max_words
+        chunk_words = words[start:end]
+        chunk_text = " ".join(chunk_words)
+        
+        if chunk_text.strip():
+            chunks.append(chunk_text)
+        
+        start += (max_words - overlap)
 
     result = []
     for i, chunk in enumerate(chunks, start=1):
