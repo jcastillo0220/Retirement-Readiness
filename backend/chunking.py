@@ -181,7 +181,7 @@ def chunk_pdf(pdf_path: str, source: str, section: str, max_words: int = 200) ->
 
 PDF_CHUNKS = []       # Northwestern Mutual — definitions
 FIDELITY_CHUNKS = []  # Fidelity — numeric rules
-
+IRS_CHUNKS = []       # IRS - authoritive numeric rules
 
 def load_all_chunks():
     """
@@ -190,11 +190,12 @@ def load_all_chunks():
     Validates chunk counts after each source and logs a warning if a
     source returns fewer than 3 chunks, indicating a scrape or parse failure.
     """
-    global PDF_CHUNKS, FIDELITY_CHUNKS
+    global PDF_CHUNKS, FIDELITY_CHUNKS, IRS_CHUNKS
 
     # Reset on every call to prevent duplicates on server reload
     PDF_CHUNKS = []
     FIDELITY_CHUNKS = []
+    IRS_CHUNKS = []
 
     # ── Northwestern Mutual PDF ───────────────────────────────────────────
     if not PDF_PATH.exists():
@@ -240,7 +241,31 @@ def load_all_chunks():
                 print(f"WARNING: Only {len(chunks)} chunks for section '{section}' — page may have blocked the scraper.")
         except Exception as e:
             print(f"ERROR: Failed to scrape Fidelity URL {url}: {e}")
+    
+    # ── IRS web pages ────────────────────────────────────────────────  
+    irs_urls = {
+        "roth_ira":        "https://www.irs.gov/retirement-plans/roth-iras",
+        "traditional_ira": "https://www.irs.gov/retirement-plans/individual-retirement-arrangements-iras",
+        "401k":            "https://www.irs.gov/retirement-plans/401k-plans",
+        "rollover_ira":    "https://www.irs.gov/retirement-plans/plan-participant-employee/rollovers-of-retirement-plan-and-ira-distributions",
+        "roth_401k":       "https://www.irs.gov/retirement-plans/designated-roth-accounts",
+    }
+         
+    for section, url in irs_urls.items():
+        try:
+            chunks = scrape_and_chunk_url(
+                url=url,
+                source="IRS",
+                section=section,
+                max_words=200,
+            )
+            IRS_CHUNKS.extend(chunks)
+            print(f"Loaded {len(chunks)} IRS chunks from {url}")
 
+            if len(chunks) < 3:
+                print(f"WARNING: Only {len(chunks)} chunks for IRS section '{section}' — page may have blocked the scraper.")
+        except Exception as e:
+            print(f"ERROR: Failed to scrape IRS URL {url}: {e}")
 
 # ============================================================
 # 5. HELPERS
@@ -287,18 +312,20 @@ def retrieve_definition_chunks(topic: str) -> list:
 
 def retrieve_numeric_chunks(topic: str) -> list:
     """
-    Retrieves numeric/rules chunks from Fidelity web pages.
+    Retrieves numeric/rules chunks from Fidelity and IRS web pages.
     Primary: exact section match.
-    Secondary: keyword-scored fallback across all Fidelity chunks.
-    Final fallback: first 5 Fidelity chunks.
+    Secondary: keyword-scored fallback across all numeric chunks.
+    Final fallback: first 5 numeric chunks.
     """
     topic = (topic or "").lower()
     section = TOPIC_MAP.get(topic)
+    
+    all_numeric_chunks = FIDELITY_CHUNKS + IRS_CHUNKS
 
     # 1. Exact section match
     if section:
         exact = [
-            chunk for chunk in FIDELITY_CHUNKS
+            chunk for chunk in all_numeric_chunks
             if chunk.get("section", "").lower() == section
         ]
         if exact:
@@ -306,7 +333,7 @@ def retrieve_numeric_chunks(topic: str) -> list:
 
     # 2. Keyword-scored fallback
     scored = []
-    for chunk in FIDELITY_CHUNKS:
+    for chunk in all_numeric_chunks:
         score = _keyword_score(chunk.get("text", ""), topic)
         if score > 0:
             scored.append((score, chunk))
@@ -316,4 +343,4 @@ def retrieve_numeric_chunks(topic: str) -> list:
         return [_with_type(chunk) for _, chunk in scored[:5]]
 
     # 3. Final fallback
-    return [_with_type(chunk) for chunk in FIDELITY_CHUNKS[:5]]
+    return [_with_type(chunk) for chunk in all_numeric_chunks[:5]]
