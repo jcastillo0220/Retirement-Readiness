@@ -248,7 +248,7 @@ def load_all_chunks():
         "traditional_ira": "https://www.irs.gov/retirement-plans/individual-retirement-arrangements-iras",
         "401k":            "https://www.irs.gov/retirement-plans/401k-plans",
         "rollover_ira":    "https://www.irs.gov/retirement-plans/plan-participant-employee/rollovers-of-retirement-plan-and-ira-distributions",
-        "roth_401k":       "https://www.irs.gov/retirement-plans/designated-roth-accounts",
+        "roth_401k":       "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-designated-roth-account",
     }
          
     for section, url in irs_urls.items():
