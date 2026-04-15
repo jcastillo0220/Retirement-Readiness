@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import json
 from pathlib import Path
 from contextlib import asynccontextmanager
  
@@ -433,7 +434,7 @@ After the answer, output one final line of JSON in this exact format:
         original_answer = None
  
         result = {
-            "answer": final_answer,
+            "answer_body": final_answer,
             "validated": validated,
             "confidence": final_confidence,
             "suggestions": generate_suggestions(final_answer, topic_key=topic_key),
@@ -484,9 +485,12 @@ After the answer, output one final line of JSON in this exact format:
 @app.post("/api/scenario")
 async def scenario(req: Request):
     data = await req.json()
- 
+
     try:
-        projection, explanation = compute_projection(
+        # ============================
+        # 0. Compute numeric projection
+        # ============================
+        projection, _ = compute_projection(
             age=int(data["age"]),
             retirement_age=int(data["retirement_age"]),
             annual_income=float(data["annual_income"]),
@@ -494,24 +498,136 @@ async def scenario(req: Request):
             monthly_contribution=float(data["monthly_contribution"]),
             return_rate=float(data.get("return_rate", 0.035)),
         )
- 
+
+        # ============================
+        # 1. Retrieve ONLY compound-interest chunks
+        # ============================
+        retrieved_chunks = retrieve_numeric_chunks("compound_interest")
+
+        if not retrieved_chunks:
+            raise HTTPException(
+                status_code=500,
+                detail="No compound interest rules available."
+            )
+
+        source_context = build_source_context(retrieved_chunks)
+
+        # ============================
+        # 2. Build explanation prompt
+        # ============================
+        single_prompt = f"""
+You are a retirement assistant. Explain the following projection using ONLY the provided compound-interest rules.
+
+Projection:
+{json.dumps(projection, indent=2)}
+
+Rules:
+{source_context}
+
+Write a short, simple Markdown explanation.
+Do NOT include any markdown links or citations.
+After the answer, output one final line of JSON:
+{{"validation":"valid","confidence":4}}
+""".strip()
+
+        current_raw = ask_ai(single_prompt)
+
+        # ============================
+        # 3. Validation / Repair Loop
+        # ============================
+        validated = False
+        original_answer = None
+        final_answer = ""
+        final_confidence = None
+        last_errors = []
+        citation_line = ""
+        answer_body = ""
+        sources_block = ""
+
+        for attempt in range(1, MAX_REPAIR_ATTEMPTS + 1):
+            answer_text, meta = parse_validation_json(current_raw)
+            final_confidence = meta.get("confidence")
+
+            if original_answer is None:
+                original_answer = answer_text
+
+            model_bad = meta.get("validation") in ["invalid", "uncertain"]
+
+            clean_answer_text = strip_source_links(answer_text)
+
+            answer_with_citations, citation_map, citation_line, answer_body, sources_block = (
+                format_with_citations(clean_answer_text, retrieved_chunks)
+            )
+
+            validation = validate_answer(
+                answer_with_citations,
+                citation_map,
+                retrieved_chunks
+            )
+
+            if not model_bad and validation["valid"]:
+                validated = True
+                final_answer = answer_with_citations
+                break
+
+            repair_reasons = []
+            if model_bad:
+                repair_reasons.append("Model flagged answer as invalid/uncertain")
+            if not validation["valid"]:
+                repair_reasons.extend(validation.get("errors", []))
+
+            last_errors = repair_reasons
+            final_answer = answer_with_citations
+
+            if attempt == MAX_REPAIR_ATTEMPTS:
+                break
+
+            repair_prompt = build_repair_prompt(
+                user_question="Explain this projection.",
+                bad_answer=answer_text,
+                repair_reasons=repair_reasons,
+                source_context=source_context,
+            )
+
+            current_raw = ask_ai(repair_prompt)
+
+        # ============================
+        # 4. Grounding Report
+        # ============================
+        raw = verify_answer_grounding(final_answer, retrieved_chunks)
+        grounding_report = raw[0] if isinstance(raw, tuple) else raw or []
+
+        # ============================
+        # 5. Final Response
+        # ============================
         return {
             "projection": projection,
-            "explanation": explanation,
+            "answer": final_answer,
+            "citation": citation_line,
+            "answer_body": answer_body,
+            "sources": sources_block,
+            "validated": validated,
+            "is_refusal": False,
+            "confidence": final_confidence,
+            "original_answer": original_answer if not validated else None,
+            "validation_errors": last_errors if not validated else [],
+            "grounding_report": grounding_report,
+            "cached": False,
+            "label_used": "scenario",
         }
- 
+
     except KeyError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Missing required field: {e.args[0]}"
         )
- 
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid scenario input: {str(e)}"
         )
- 
+
     except Exception as e:
         logger.exception("Scenario endpoint failed")
         raise HTTPException(

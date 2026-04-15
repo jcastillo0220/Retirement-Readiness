@@ -1,4 +1,3 @@
-import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import { citationBlock, citationLink } from "../styles";
@@ -76,7 +75,7 @@ export default function AnswerBubble({
           <span style={refusalIcon}>⚠</span>
           <span style={refusalLabel}>Outside verified sources</span>
         </div>
-        <p style={refusalText}>{answer}</p>
+        <p style={refusalText}>{answer_body}</p>
       </div>
     );
   }
@@ -243,22 +242,6 @@ const badgeChipStyle = {
   color: "#8fb3ff",
   textDecoration: "none",
   cursor: "pointer",
-};
-
-const toggleBtnStyle = {
-  background: "none",
-  border: "none",
-  color: "rgba(234,240,255,0.6)",
-  fontSize: 13,
-  cursor: "pointer",
-  padding: 0,
-};
-
-const phraseItemStyle = {
-  fontSize: 12,
-  color: "rgba(234,240,255,0.6)",
-  marginBottom: 3,
-  lineHeight: 1.5,
 };
 
 const refusalBubbleStyle = {

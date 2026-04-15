@@ -28,7 +28,7 @@ export default function AIChat() {
   const {
     answer,
     citation,
-    answerBody,
+    answer_body,
     sources,
     isRefusal,
     suggestedButtons,
@@ -211,7 +211,7 @@ export default function AIChat() {
         {!loading && answer && (
           <AnswerBubble
             citation={citation}
-            answer={answerBody}
+            answer={answer_body}
             sources={sources}
             validated={validated}
             isRefusal={isRefusal}
