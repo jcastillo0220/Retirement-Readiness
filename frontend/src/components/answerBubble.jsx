@@ -3,6 +3,35 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import { citationBlock, citationLink } from "../styles";
 
+function highlightPhrase(text, phrase) {
+  if (!phrase) return text;
+
+  const ngrams = generateNGrams(phrase, 2); // require 2+ words
+  let highlighted = text;
+
+  for (const ng of ngrams) {
+    const escaped = ng.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escaped, "gi");
+
+    highlighted = highlighted.replace(regex, match => `<mark>${match}</mark>`);
+  }
+
+  return highlighted;
+}
+
+function generateNGrams(phrase, minWords = 2) {
+  const words = phrase.split(/\s+/).filter(w => w.length > 2);
+  const ngrams = [];
+
+  for (let size = minWords; size <= words.length; size++) {
+    for (let i = 0; i <= words.length - size; i++) {
+      ngrams.push(words.slice(i, i + size).join(" "));
+    }
+  }
+
+  return ngrams;
+}
+
 export default function AnswerBubble({
   citation,
   answer,
@@ -10,13 +39,12 @@ export default function AnswerBubble({
   validated,
   isRefusal = false,
   originalAnswer,
-  supported_phrases = [],
+  grounding_report = [],
   bubbleStyle,
   validatedPill,
   correctedPill,
 }) {
-  const [phrasesOpen, setPhrasesOpen] = useState(false);
-  const supported = supported_phrases || [];
+  const report = grounding_report.full_report || [];
 
   // Extract ALL source badges from the citation line
   // e.g. "According to [Fidelity](url), [IRS](url), and [Northwestern Mutual](url),"
@@ -97,7 +125,7 @@ export default function AnswerBubble({
 
       {/* ── Sources block ── */}
       {sources && (
-        <div style={{ marginTop: 14 }}>
+        <div style={citationLink}>
           <ReactMarkdown
             rehypePlugins={[rehypeRaw]}
             components={{ a: linkRenderer }}
@@ -107,25 +135,62 @@ export default function AnswerBubble({
         </div>
       )}
 
-      {/* ── Supported phrases toggle ── */}
-      {supported.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <button
-            onClick={() => setPhrasesOpen((p) => !p)}
-            style={toggleBtnStyle}
-          >
-            {phrasesOpen ? "▼" : "▶"} Supported phrases ({supported.length})
-          </button>
-          {phrasesOpen && (
-            <ul style={{ marginTop: 6, paddingLeft: 18 }}>
-              {supported.map((phrase, i) => (
-                <li key={i} style={phraseItemStyle}>
-                  {typeof phrase === "string" ? phrase : phrase.phrase}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      {report.length > 0 && (
+        <details style={{ marginTop: 16 }}>
+          <summary style={{ cursor: "pointer", opacity: 0.85 }}>
+            Grounding Report ({report.length})
+          </summary>
+
+          <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+            {report.map((item, i) => (
+              <li key={i} style={{ marginBottom: 12 }}>
+                <strong>{item.phrase}</strong>:{" "}
+                <span style={{ color: item.supported ? "lightgreen" : "salmon" }}>
+                  {item.supported ? "Supported" : "Not supported"}
+                </span>
+
+                {item.chunks && item.chunks.length > 0 && (
+                  <ul style={{ marginTop: 6, paddingLeft: 20 }}>
+                    {item.chunks.map((chunk, j) => (
+                      <li key={j} style={{ marginBottom: 8 }}>
+                        <details>
+                          <summary style={{ cursor: "pointer" }}>
+                            <em>Chunk {chunk.id}</em> — {chunk.source} ({chunk.section})
+                          </summary>
+
+                          <div
+                            style={{
+                              marginTop: 6,
+                              padding: "10px 12px",
+                              background: "rgba(255,255,255,0.05)",
+                              borderRadius: 8,
+                              border: "1px solid rgba(255,255,255,0.12)",
+                              whiteSpace: "pre-wrap",
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            <ReactMarkdown
+                              rehypePlugins={[rehypeRaw]}
+                              components={{
+                                mark: ({ children }) => (
+                                  <mark style={{ background: "#e1e509ce", padding: "0 2px" }}>
+                                    {children}
+                                  </mark>
+                                ),
+                              }}
+                            >
+                              {highlightPhrase(chunk.text, item.phrase)}
+                            </ReactMarkdown>
+                          </div>
+                        </details>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
 
       {/* ── Validation pill ── */}

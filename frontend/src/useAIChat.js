@@ -15,7 +15,7 @@ export function useAIChat() {
   const [error, setError] = useState(null);
   const [labelPrompt, setLabelPrompt] = useState(null);
   const [history, setHistory] = useState([]);
-  const [supported_phrases, setSupportedPhrases] = useState([]);
+  const [grounding_report, setGroundingReport] = useState([]);
   const [activeTopicKey, setActiveTopicKey] = useState("definitions");
  
   const requestIdRef = useRef(0);
@@ -57,7 +57,7 @@ export function useAIChat() {
       setValidated(isValid);
       setOriginalAnswer(orig);
       setLabelPrompt(res?.label_prompt || null);
-      setSupportedPhrases(res?.supported_phrases || []);
+      setGroundingReport(res?.grounding_report || []);
  
       setHistory((prev) => [
         ...prev,
@@ -71,7 +71,7 @@ export function useAIChat() {
           originalAnswer: orig,
           timestamp: Date.now(),
           cached: !!res?.cached,
-          supported_phrases: res?.supported_phrases || [],
+          grounding_report: res?.grounding_report || [],
         },
       ]);
     } catch (err) {
@@ -152,7 +152,7 @@ export function useAIChat() {
     error,
     labelPrompt,
     history,
-    supported_phrases,
+    grounding_report,
     activeTopicKey,
     handleAsk,
     handleScenario,

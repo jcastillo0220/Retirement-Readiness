@@ -459,45 +459,6 @@ After the answer, output one final line of JSON in this exact format:
     else:
         grounding_report = raw or []
  
-    supported_phrases = [
-        g["phrase"] for g in grounding_report
-        if isinstance(g, dict) and g.get("supported")
-    ]
- 
-    # ============================
-    # 4A. GROUNDING REFUSAL CHECK
-    # If fewer than 40% of extracted phrases are supported by the
-    # retrieved chunks, the answer is not grounded well enough to
-    # present to the user. Return a clean refusal instead of a
-    # "Corrected" answer that leaks internal repair state.
-    # ============================
-    if grounding_report:
-        grounding_rate = len(supported_phrases) / len(grounding_report)
-        if grounding_rate < 0.40:
-            refusal_msg = (
-                "I can only answer questions grounded in the sources I've been given. "
-                "That one falls outside what I can verify. "
-                "Try asking about a specific retirement account type — like a Roth IRA, "
-                "401(k), or Traditional IRA — and I'll do my best to help."
-            )
-            refusal_result = {
-                "answer": refusal_msg,
-                "citation": "",
-                "answer_body": refusal_msg,
-                "sources": "",
-                "validated": False,
-                "is_refusal": True,
-                "confidence": 0,
-                "suggestions": suggestions,
-                "original_answer": None,
-                "validation_errors": [
-                    f"Grounding rate too low ({grounding_rate:.0%}) — refusal returned."
-                ],
-                "supported_phrases": [],
-            }
-            cache_set(cache_key, refusal_result)
-            return {**refusal_result, "cached": False, "label_used": label}
- 
     result = {
         "answer": final_answer,
         "citation": citation_line,
@@ -509,7 +470,7 @@ After the answer, output one final line of JSON in this exact format:
         "suggestions": suggestions,
         "original_answer": original_answer if not validated else None,
         "validation_errors": last_errors if not validated else [],
-        "supported_phrases": supported_phrases,
+        "grounding_report": grounding_report,
     }
  
     cache_set(cache_key, result)

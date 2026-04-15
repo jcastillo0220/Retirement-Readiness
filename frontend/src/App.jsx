@@ -38,7 +38,7 @@ export default function AIChat() {
     originalAnswer,
     error,
     history,
-    supported_phrases,
+    grounding_report,
     activeTopicKey,
     handleAsk,
     handleScenario,
@@ -143,6 +143,20 @@ export default function AIChat() {
           buttonRowStyle={buttonRowStyle}
         />
 
+                {/* Suggested follow-ups */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "0 6px" }}>
+          {!loading &&
+            suggestedButtons.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => handleAsk(item.prompt, activeTopicKey, item.label)}
+                style={suggestionStyle}
+              >
+                {item.label}
+              </button>
+            ))}
+        </div>
+
         {/* Free-text input */}
         <div style={{ display: "flex", gap: 10, padding: "0 6px" }}>
           <input
@@ -182,20 +196,6 @@ export default function AIChat() {
           </button>
         </div>
 
-        {/* Suggested follow-ups */}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "0 6px" }}>
-          {!loading &&
-            suggestedButtons.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => handleAsk(item.prompt, activeTopicKey, item.label)}
-                style={suggestionStyle}
-              >
-                {item.label}
-              </button>
-            ))}
-        </div>
-
         {/* Scenario form */}
         <ScenarioForm onSubmit={handleScenario} loading={loading} />
 
@@ -216,7 +216,7 @@ export default function AIChat() {
             validated={validated}
             isRefusal={isRefusal}
             originalAnswer={originalAnswer}
-            supported_phrases={supported_phrases}
+            grounding_report={grounding_report}
             bubbleStyle={bubbleStyle}
             validatedPill={validatedPill}
             correctedPill={correctedPill}

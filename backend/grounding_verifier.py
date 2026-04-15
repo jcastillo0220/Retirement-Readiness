@@ -133,7 +133,7 @@ def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0
     Overlap is computed against content words only (stopwords excluded):
         |content_phrase_words ∩ chunk_words| / |content_phrase_words|
  
-    Threshold of 0.5: at least half of the phrase's content words
+    Threshold of 0.7: at least half of the phrase's content words
     must appear in a single chunk. Looser than the original 0.75
     because shorter 3-4 word phrases need a proportionally lower bar.
     """
@@ -165,27 +165,30 @@ def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0
 # GROUNDING REPORT
 # ============================================================
  
-def verify_answer_grounding(answer: str, retrieved_chunks: list) -> list:
-    """
-    Extract key phrases from the answer body and check each one
-    against the retrieved chunks. Returns a list of dicts:
-        [{ "phrase": str, "supported": bool }, ...]
- 
-    Always returns a list — never raises, never returns None.
-    """
-    if not answer or not retrieved_chunks:
-        return []
- 
+def verify_answer_grounding(answer: str, retrieved_chunks: list):
     phrases = extract_key_phrases(answer)
-    if not phrases:
-        return []
- 
     report = []
+
     for phrase in phrases:
-        supported = phrase_supported(phrase, retrieved_chunks, min_overlap=0.5)
+        supporting_chunks = []
+
+        for chunk in retrieved_chunks:
+            if phrase_supported(phrase, [chunk], min_overlap=0.75):
+                supporting_chunks.append({
+                    "id": chunk.get("id"),
+                    "source": chunk.get("source"),
+                    "section": chunk.get("section"),
+                    "text": chunk.get("text"),
+                })
+
         report.append({
             "phrase": phrase,
-            "supported": supported,
+            "supported": len(supporting_chunks) > 0,
+            "chunks": supporting_chunks if supporting_chunks else []
         })
- 
-    return report
+
+    return {
+        "supported_phrases": [item for item in report if item["supported"]],
+        "unsupported_phrases": [item for item in report if not item["supported"]],
+        "full_report": report
+    }
