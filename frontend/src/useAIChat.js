@@ -4,7 +4,7 @@ import { askAI, runScenario } from "./api";
 export function useAIChat() {
   const [answer, setAnswer] = useState("");
   const [citation, setCitation] = useState("");
-  const [answerBody, setAnswerBody] = useState("");
+  const [answer_body, setAnswerBody] = useState("");
   const [sources, setSources] = useState("");
   const [isRefusal, setIsRefusal] = useState(false);
   const [suggestedButtons, setSuggestedButtons] = useState([]);
@@ -67,6 +67,9 @@ export function useAIChat() {
           prompt: finalPrompt,
           topicKey: finalTopicKey,
           answer: finalAnswer,
+          citation: res?.citation ?? "",
+          answer_body: res?.answer_body ?? finalAnswer,
+          sources: res?.sources ?? "",
           validated: isValid,
           originalAnswer: orig,
           timestamp: Date.now(),
@@ -84,64 +87,83 @@ export function useAIChat() {
   }
  
   async function handleScenario(inputs) {
-    const id = ++requestIdRef.current;
- 
-    setSelectedQuestion("Personalized Scenario");
-    setActiveTopicKey("scenario");
-    setLoading(true);
-    setError(null);
-    setSuggestedButtons([]);
-    setOriginalAnswer(null);
-    setValidated(true);
- 
-    try {
-      const res = await runScenario({
-        age: Number(inputs.age),
-        retirement_age: Number(inputs.retirement_age),
-        annual_income: Number(inputs.annual_income),
-        current_savings: Number(inputs.current_savings),
-        monthly_contribution: Number(inputs.monthly_contribution),
-        return_rate:
-          inputs.return_rate !== undefined
-            ? Number(inputs.return_rate)
-            : undefined,
-      });
- 
-      if (id !== requestIdRef.current) return;
- 
-      const { projection, explanation } = res;
- 
-      setAnswer(explanation || "");
-      setSupportedPhrases([]);
- 
-      setHistory((prev) => [
-        ...prev,
-        {
-          id,
-          label: "Personalized Scenario",
-          prompt: JSON.stringify(inputs),
-          topicKey: "scenario",
-          answer: explanation || "",
-          validated: true,
-          originalAnswer: null,
-          timestamp: Date.now(),
-          cached: false,
-          projection,
-        },
-      ]);
-    } catch (err) {
-      if (id === requestIdRef.current) {
-        setError(err?.message || "Scenario failed.");
-      }
-    } finally {
-      if (id === requestIdRef.current) setLoading(false);
+  const id = ++requestIdRef.current;
+
+  setSelectedQuestion("Personalized Scenario");
+  setActiveTopicKey("scenario");
+  setLoading(true);
+  setError(null);
+  setSuggestedButtons([]);
+  setOriginalAnswer(null);
+  setValidated(true);
+
+  try {
+    const res = await runScenario({
+      age: Number(inputs.age),
+      retirement_age: Number(inputs.retirement_age),
+      annual_income: Number(inputs.annual_income),
+      current_savings: Number(inputs.current_savings),
+      monthly_contribution: Number(inputs.monthly_contribution),
+      return_rate:
+        inputs.return_rate !== undefined
+          ? Number(inputs.return_rate)
+          : undefined,
+    });
+
+    if (id !== requestIdRef.current) return;
+
+    // Extract all fields returned by backend
+    const {
+      projection,
+      answer,
+      citation,
+      answer_body,
+      sources,
+      validated,
+      original_answer,
+      grounding_report,
+    } = res;
+
+    // Set all UI fields just like handleAsk()
+    setAnswer(answer || "");
+    setCitation(citation || "");
+    setAnswerBody(answer_body || "");
+    setSources(sources || "");
+    setGroundingReport(grounding_report || []);
+    setValidated(validated ?? true);
+    setOriginalAnswer(original_answer || null);
+    setIsRefusal(res?.is_refusal ?? false);
+
+    // Save to history
+    setHistory((prev) => [
+      ...prev,
+      {
+        id,
+        label: "Personalized Scenario",
+        prompt: JSON.stringify(inputs),
+        topicKey: "scenario",
+        answer: answer_body || "",
+        validated: validated ?? true,
+        originalAnswer: original_answer || null,
+        timestamp: Date.now(),
+        cached: false,
+        projection,
+        grounding_report: grounding_report || [],
+      },
+    ]);
+  } catch (err) {
+    if (id === requestIdRef.current) {
+      setError(err?.message || "Scenario failed.");
     }
+  } finally {
+    if (id === requestIdRef.current) setLoading(false);
   }
+}
  
   return {
     answer,
     citation,
-    answerBody,
+    answer_body,
     sources,
     isRefusal,
     suggestedButtons,
