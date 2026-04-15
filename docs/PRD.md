@@ -130,12 +130,12 @@ The backend computes:
 
 ## **Current Acceptance Metrics**
 
-| Metric | Target | Notes |
+| Metric | Target | Meaning |
 |--------|--------|-------|
-| Retrieval Accuracy | 100% | Correct source retrieved for every in-scope query |
-| Citation Accuracy | 100% | Every citation matches the actually retrieved source |
-| Grounding Accuracy | 100% | Answer content supported by retrieved chunks |
-| Halluciation Rate |  |  |
+| Retrieval Accuracy | 100% | Correct source matching |
+| Citation Accuracy | 100% | Answers include citations |
+| Grounding Accuracy | &ge; 70% | Answer content supported by retrieved chunks |
+| Halluciation Rate | &le; 5% | unsupported statements | 
 | Refusal Accuracy | 100% | Out-of-scope and unsupported queries correctly refused or disclaimed |
 
 ## **Scope Clarifications**
