@@ -166,6 +166,7 @@ def phrase_supported(phrase: str, retrieved_chunks: list, min_overlap: float = 0
 # ============================================================
  
 def verify_answer_grounding(answer: str, retrieved_chunks: list):
+    print("Verifying answer grounding...")
     phrases = extract_key_phrases(answer)
     report = []
 

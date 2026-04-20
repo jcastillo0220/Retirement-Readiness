@@ -99,6 +99,7 @@ def normalize_number(num: str) -> str:
  
  
 def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list):
+    print("Validating answer...")
     errors = []
  
     # 1. Citation format checks
