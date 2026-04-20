@@ -99,11 +99,68 @@ unclear about where to begin.
 - The system will have access to a small set of trusted financial education websites to ground explanations and reduce hallucinations
 
 ### Constraints:
-- No access to sensitive financial data, real‑time market feeds, or personal financial accounts
-- Strict ethical boundaries: the system must avoid investment advice, predictions, or personalized financial planning
-- ### Milestone 2:
-    - Implementation of user inputs
-    - Cross communication between front-end and back-end languages
+- No access to sensitive financial accounts or real‑time market data.
+- Strict ethical boundaries: no investment advice or predictions.
+- Limited API usage due to cost.
+- Must avoid storing personally identifiable financial information.
+- Must operate within available compute resources.
+
+## **Scenario Workflow**
+
+### End‑to‑End Flow for Scenario‑Based Projections
+1. **User Input Collection**  
+    -The user enters age, retirement age, income, current savings, monthly contribution, and optional expenses.
+2. **Frontend → Backend Request**  
+    - Inputs are validated and sent to the /api/scenario endpoint.
+3. **Deterministic Projection Engine**  
+The backend computes:  
+    - Years to grow
+    - Future value of current savings
+    - Future value of monthly contributions
+    - Total projected retirement balance  
+     All calculations use fixed, validated formulas.
+4. **Source Retrieval**  
+    - The backend retrieves pre‑approved financial education chunks (Fidelity).
+5. **LLM Explanation Generation**  
+    - The system sends deterministic values + source excerpts to the LLM to generate a grounded explanation.
+6. **Citation Injection & Validation**
+    - The backend inserts citation markers and verifies that every cited claim is supported.
+7. **Final Response to Frontend**  
+    - The frontend receives the projection object, explanation text, citation line, sources block, and citation map.
+
+## **Current Acceptance Metrics**
+
+| Metric | Target | Meaning |
+|--------|--------|-------|
+| Retrieval Accuracy | 100% | Correct source matching |
+| Citation Accuracy | 100% | Answers include citations |
+| Grounding Accuracy | &ge; 70% | Answer content supported by retrieved chunks |
+| Halluciation Rate | &le; 5% | unsupported statements | 
+| Refusal Accuracy | 100% | Out-of-scope and unsupported queries correctly refused or disclaimed |
+
+## **Scope Clarifications**
+### **In‑Scope (MVP)**  
+  - Deterministic retirement projections using validated formulas
+  - AI explanations grounded in trusted financial education sources
+  - Natural‑language scenario questions
+  - Citation‑based transparency
+  - Beginner‑friendly UI
+  - Error handling for invalid or missing inputs
+  - Safety filters preventing investment advice
+### **Out‑of‑Scope (Non‑Goals)**  
+  - Personalized investment recommendations
+  - Real‑time market data or stock predictions
+  - Access to personal financial accounts
+  - Arbitrary custom financial queries
+  - Storage of sensitive financial data
+### **Technical & Ethical Constraints**  
+  - Limited compute resources and API usage
+  - Strict grounding to avoid hallucinations
+  - Only pre‑approved financial education sources allowed
+
+### Milestone 2:
+  - Implementation of user inputs
+  - Cross communication between front-end and back-end languages
     - Receiving input from AI model
     - Limited API usage due to cost considerations
     - The system must comply with privacy expectations and avoid storing personally identifiable financial information
