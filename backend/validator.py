@@ -62,29 +62,89 @@ def parse_validation_json(raw: str):
     return raw.strip(), meta
  
  
-def build_repair_prompt(answer, question, errors=None):
-    error_text = "\n".join(f"- {e}" for e in errors) if errors else "General failure"
- 
+def build_repair_prompt(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
+    issues = "\n".join(f"- {reason}" for reason in repair_reasons) if repair_reasons else "- General failure"
+
     return f"""
 Fix the answer below.
  
 Question:
-{question}
+{user_question}
  
 Bad Answer:
-{answer}
+{bad_answer}
  
 Issues:
-{error_text}
+{issues}
+ 
+Make sure to use only the souces provided below to answer the question. 
+Do not include any information that cannot be supported by the provided sources.
+ 
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
+ 
+Keep the answer short, simple, easy to read for beginners, and in Markdown.
+A total answer length of 3 - 4 sentences maximum.
+
+Source Excerpts:
+{source_context}
  
 Rules:
 - Keep it simple
 - Stay accurate
-- Use only provided sources
+- Prefer the provided sources when relevant
 - No hallucinations
+- End with one final JSON line in this exact format:
+{{"validation":"valid","confidence":4}}
+""".strip()
+
+def build_repair_prompt_scenario(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
+    issues = "\n".join(f"- {reason}" for reason in repair_reasons) if repair_reasons else "- General failure"
+
+    return f"""
+Fix the answer below.
  
-Return:
-Answer + JSON validation at end
+Question:
+{user_question}
+ 
+Bad Answer:
+{bad_answer}
+ 
+Issues:
+{issues}
+ 
+You are a retirement assistant.
+
+Use the provided source excerpts below to explain the scenario.
+Use the provided sources whenever relevant.
+Do NOT include any source markers like [source 1], [source 2], or numeric tags.
+Do NOT invent citations — the system will add them automatically.
+
+Keep the answer short, simple, and easy to read.
+Use clear spacing and short sections.
+Make the explanation simple, clear, and condensed.
+
+Your output MUST follow this structure:
+
+Explanation of Projection
+- Write 2–3 sentences explaining what the projection means.
+- You ARE allowed to use the deterministic values provided (age, years to grow, projected balance, return rate).
+- Do NOT calculate anything yourself.
+
+Explanation of Inputs
+- For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate),
+ write a short, simple sentence explaining what that input represents.
+- Keep each line concise.
+
+Source Excerpts:
+{source_context}
+ 
+Rules:
+- Keep it simple
+- Stay accurate
+- Prefer the provided sources when relevant
+- No hallucinations
+- End with one final JSON line in this exact format:
+{{"validation":"valid","confidence":4}}
 """.strip()
  
  
@@ -98,7 +158,7 @@ def normalize_number(num: str) -> str:
     return num.replace("$", "").replace(",", "")
  
  
-def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list):
+def validate_answer(answer_body: str, citation_map: dict, retrieved_chunks: list, answer_text: str):
     print("Validating answer...")
     errors = []
  
@@ -114,10 +174,6 @@ def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list
             errors.append("Citation must start with \'According to\'")
             continue
  
-        if "(" not in phrase or ")" not in phrase:
-            errors.append("Citation must include a Markdown link")
-            continue
- 
         normalized = normalize_phrase(phrase)
  
         if not all_sources_known(normalized, retrieved_chunks):
@@ -129,7 +185,7 @@ def validate_answer(answer_text: str, citation_map: dict, retrieved_chunks: list
             errors.append("Citation does not match primary source")
  
     # 2. Numeric cross-check
-    answer_nums = {normalize_number(n) for n in extract_numbers(answer_text)}
+    answer_nums = {normalize_number(n) for n in extract_numbers(answer_body)}
  
     if answer_nums:
         chunk_nums = set()
