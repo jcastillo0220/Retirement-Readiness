@@ -12,21 +12,29 @@ from PyPDF2 import PdfReader
 # ============================================================
 
 TOPIC_MAP = {
-    # Definitions (PDF — Northwestern Mutual)
+    # Definitions
     "definitions": "definitions",
-    "roth_ira_definition": "definitions",
-    "401k_definition": "definitions",
-    "ira_definition": "definitions",
-    "rollover_ira_definition": "definitions",
-    "roth_401k_definition": "definitions",
+    "roth_ira_definition": "roth_ira_definition",
+    "401k_definition": "401k_definition",
+    "ira_definition": "ira_definition",
+    "rollover_ira_definition": "rollover_ira_definition",
+    "roth_401k_definition": "roth_401k_definition",
 
-    # Numeric rules (Fidelity web pages)
+    # Numeric rules
     "roth_ira": "roth_ira",
     "traditional_ira": "traditional_ira",
     "401k": "401k",
     "rollover_ira": "rollover_ira",
     "roth_401k": "roth_401k",
     "compound_interest": "compound_interest",
+
+    # Combined topic for definitions AND numeric
+    "roth_ira_and_roth_401k": [
+        "roth_ira_definition",
+        "roth_401k_definition",
+        "roth_ira",
+        "roth_401k"
+    ],
 }
 
 # ============================================================
@@ -302,6 +310,17 @@ def retrieve_definition_chunks(topic: str) -> list:
     topic = (topic or "definitions").lower()
     section = TOPIC_MAP.get(topic, "definitions")
 
+        # If section is a list → combine chunks from all sections
+    if isinstance(section, list):
+        combined = []
+        for sec in section:
+            combined.extend([
+                chunk for chunk in PDF_CHUNKS
+                if chunk.get("section", "").lower() == sec
+            ])
+        if combined:
+            return [_with_type(chunk) for chunk in combined[:5]]
+
     matches = [
         chunk for chunk in PDF_CHUNKS
         if chunk.get("section", "").lower() == section
@@ -322,8 +341,19 @@ def retrieve_numeric_chunks(topic: str) -> list:
     """
     topic = (topic or "").lower()
     section = TOPIC_MAP.get(topic)
-    
+
     all_numeric_chunks = FIDELITY_CHUNKS + IRS_CHUNKS
+
+    # If section is a list → combine chunks from all sections
+    if isinstance(section, list):
+        combined = []
+        for sec in section:
+            combined.extend([
+                chunk for chunk in all_numeric_chunks
+                if chunk.get("section", "").lower() == sec
+            ])
+        if combined:
+            return [_with_type(chunk) for chunk in combined[:5]]
 
     # 1. Exact section match
     if section:

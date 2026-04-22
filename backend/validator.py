@@ -127,11 +127,12 @@ Your output MUST follow this structure:
 
 Explanation of Projection
 - Write 2–3 sentences explaining what the projection means.
-- You ARE allowed to use the deterministic values provided (age, years to grow, projected balance, return rate).
+- You must used the provided sources and rules.
+- Relate it to compound interest growth over time.
 - Do NOT calculate anything yourself.
 
 Explanation of Inputs
-- For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate),
+- For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate [as a percentage], projected balance), 
  write a short, simple sentence explaining what that input represents.
 - Keep each line concise.
 
@@ -144,6 +145,7 @@ Rules:
 - Prefer the provided sources when relevant
 - No hallucinations
 - End with one final JSON line in this exact format:
+Use markdown formatting for the answer.
 {{"validation":"valid","confidence":4}}
 """.strip()
  

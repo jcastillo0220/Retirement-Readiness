@@ -70,76 +70,63 @@ STOPWORDS = {
     "about", "would", "could", "should", "since", "while", "where", "what",
 }
  
+def split_into_clauses(text: str) -> list:
+    """
+    Split text into natural clauses using punctuation and conjunctions.
+    """
+    # Break on punctuation
+    parts = re.split(r"[.;:!?]", text)
+
+    clauses = []
+    for part in parts:
+        # Further split on common clause joiners
+        subparts = re.split(r"\b(and|but|so|because|while|when|which|that)\b", part)
+        for s in subparts:
+            cleaned = s.strip()
+            if len(cleaned.split()) >= 3:
+                clauses.append(cleaned)
+
+    return clauses
+
+def extract_noun_phrases(text: str) -> list:
+    """
+    Extract simple noun phrases using regex patterns.
+    """
+    pattern = r"\b(?:[A-Za-z']+\s){0,3}(?:money|taxes|withdrawals|retirement|income|contributions)\b"
+    matches = re.findall(pattern, text, flags=re.IGNORECASE)
+    return [m.strip() for m in matches]
+
+def extract_verb_phrases(text: str) -> list:
+    """
+    Extract simple verb-object patterns.
+    """
+    pattern = r"\b(contribute|withdraw|pay|paid|earn|grow|receive)\s+[A-Za-z']+(?:\s+[A-Za-z']+){0,2}"
+    matches = re.findall(pattern, text, flags=re.IGNORECASE)
+    return [m.strip() for m in matches]
  
 def extract_key_phrases(answer: str) -> list:
-    """
-    Extract meaningful semantic phrases WITHOUT external NLP modules.
-    Uses simple heuristics:
-    - capture noun-like spans (word sequences ending in nouns)
-    - capture verb + object patterns
-    - avoid overlapping sliding windows
-    - avoid stopword-only phrases
-    """
-
     text = clean_answer_for_grounding(answer)
     if not text:
         return []
 
-    # Tokenize into simple words
-    words = re.findall(r"[A-Za-z][a-z']+", text)
-
-    # Basic POS-like heuristics
-    # Words that often behave like nouns
-    noun_endings = ("ion", "ment", "ness", "ity", "ship", "age", "ance", "ence")
-    noun_like = lambda w: (
-        w.endswith(noun_endings)
-        or w in {"money", "taxes", "withdrawals", "retirement", "income", "contributions"}
-    )
-
-    # Words that often behave like verbs
-    verb_like = lambda w: (
-        w in {"contribute", "withdraw", "pay", "paid", "earn", "grow", "receive"}
-    )
-
+    clauses = split_into_clauses(text)
     phrases = []
     seen = set()
 
-    # 1. Extract noun-like spans (2–6 words)
-    for i in range(len(words)):
-        for j in range(i + 1, min(i + 6, len(words))):
-            span = words[i:j]
-            if len(span) < 2:
-                continue
-
-            # Must end in a noun-like word
-            if not noun_like(span[-1]):
-                continue
-
-            # Must contain at least 2 content words
-            content = [w for w in span if w.lower() not in STOPWORDS]
-            if len(content) < 2:
-                continue
-
-            phrase = " ".join(span)
-            low = phrase.lower()
+    for clause in clauses:
+        # Noun phrases
+        for np in extract_noun_phrases(clause):
+            low = np.lower()
             if low not in seen:
                 seen.add(low)
-                phrases.append(phrase)
+                phrases.append(np)
 
-    # 2. Extract verb + object patterns
-    for i in range(len(words) - 1):
-        if verb_like(words[i]):
-            # verb + next 1–3 words
-            for j in range(i + 1, min(i + 4, len(words))):
-                span = words[i:j]
-                content = [w for w in span if w.lower() not in STOPWORDS]
-                if len(content) < 2:
-                    continue
-                phrase = " ".join(span)
-                low = phrase.lower()
-                if low not in seen:
-                    seen.add(low)
-                    phrases.append(phrase)
+        # Verb phrases
+        for vp in extract_verb_phrases(clause):
+            low = vp.lower()
+            if low not in seen:
+                seen.add(low)
+                phrases.append(vp)
 
     return phrases[:15]
  

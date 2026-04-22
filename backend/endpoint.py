@@ -2,6 +2,8 @@ import os
 import re
 import logging
 import json
+import time
+import random
 from pathlib import Path
 from contextlib import asynccontextmanager
  
@@ -10,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from google import genai
+from google.genai.errors import ServerError
  
 from generator import generate_suggestions
 from cache import make_cache_key, cache_get, cache_set
@@ -82,34 +85,50 @@ app.add_middleware(
 # ============================
 # HELPERS
 # ============================
-def ask_ai(prompt: str) -> str:
-    try:
-        resp = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt
-        )
-        return (resp.text or "").strip()
+def ask_ai(prompt: str, retries=3):
+    last_exception = None
 
-    except genai.errors.ServerError as e:
-        # New SDK uses e.code, not e.status_code
-        if e.code == 503:
-            raise HTTPException(
-                status_code=503,
-                detail="The AI model is temporarily overloaded. Please try again shortly."
+    for attempt in range(1, retries + 1):
+        try:
+            resp = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt
             )
-        raise
+            return resp.text
 
-    except Exception as e:
-        logger.exception("Gemini call failed")
+        except ServerError as e:
+            last_exception = e
+
+            # Retry only on 503 overload
+            if e.code == 503:
+                sleep = 0.5 * attempt + random.random() * 0.3
+                time.sleep(sleep)
+                continue
+
+            # Other server errors: stop immediately
+            raise HTTPException(
+                status_code=500,
+                detail=f"Gemini error: {type(e).__name__}: {str(e)}"
+            )
+
+    # Retries exhausted
+    if last_exception and last_exception.code == 503:
         raise HTTPException(
-            status_code=500,
-            detail=f"Gemini error: {type(e).__name__}: {str(e)}"
+            status_code=503,
+            detail="The AI model is temporarily overloaded. Please try again shortly."
         )
+
+    raise HTTPException(
+        status_code=500,
+        detail="Unknown Gemini error occurred."
+    )
  
  
 def is_definition_question(q: str) -> bool:
-    q = (q or "").lower()
-    return any(k in q for k in ["what is", "define", "explain", "meaning"])
+    if q == "traditional_ira" or q == "roth_ira" or q == "rollover_ira" or q == "401k" or q == "roth_ira_and_roth_401k":
+        return True
+    else:
+        return False
  
  
 def sanitize_question(text: str) -> str:
@@ -161,6 +180,21 @@ def build_refusal_response(reason: str, label=None):
         "refused": True,
     }
  
+def extract_projection_section(answer_text: str) -> str:
+    """
+    Extract only the 'Explanation of Projection' section for grounding validation.
+    """
+    lower = answer_text.lower()
+    start = lower.find("explanation of projection")
+    end = lower.find("explanation of inputs")
+
+    if start == -1:
+        return answer_text  # fallback
+
+    if end == -1:
+        return answer_text[start:]
+
+    return answer_text[start:end].strip()
  
 # ============================
 # ANSWER CLEANING
@@ -212,6 +246,11 @@ async def generate(req: Request):
     user_question = sanitize_question(data.get("question") or "")
     topic_key = data.get("topicKey") or data.get("topic_key") or "definitions"
     label = data.get("label")
+
+    uq = user_question.lower()
+
+    if ("roth ira" in uq and "roth 401" in uq) or ("roth ira" in uq and "roth 401k" in uq):
+        topic_key = "roth_ira_and_roth_401k"
  
     if not user_question:
         raise HTTPException(status_code=400, detail="Missing 'question'.")
@@ -254,7 +293,7 @@ async def generate(req: Request):
     # ============================
     # 1. RETRIEVE CHUNKS
     # ============================
-    if is_definition_question(user_question):
+    if is_definition_question(topic_key):
         retrieved_chunks = retrieve_definition_chunks(topic_key)
     else:
         retrieved_chunks = retrieve_numeric_chunks(topic_key)
@@ -445,9 +484,23 @@ Projection:
 Rules:
 {source_context}
 
-Write a short, simple Markdown explanation.
+Your output MUST follow this structure:
+
+Explanation of Projection
+- Write 2–3 sentences explaining what the projection means.
+- You must used the provided sources and rules.
+- Relate it to compound interest growth over time.
+- Do NOT calculate anything yourself.
+
+Explanation of Inputs
+- Relate the explanation to the specific inputs provided.
+- For each input (age, retirement age, years to grow, income, current savings, monthly contribution, return rate [as a percentage], projected balance), 
+ write a short, simple sentence explaining what that input represents.
+- Keep each line concise.
+
 Do NOT include any markdown links or citations.
 After the answer, output one final line of JSON:
+Use markdown formatting for the answer.
 {{"validation":"valid","confidence":4}}
 """.strip()
 
@@ -472,28 +525,28 @@ After the answer, output one final line of JSON:
             if original_answer is None:
                 original_answer = answer_text
 
-            model_bad = meta.get("validation") in ["invalid", "uncertain"]
-
             clean_answer_text = strip_source_links(answer_text)
 
             answer_with_citations, citation_map, citation_line, answer_body, sources_block = (
                 format_with_citations(clean_answer_text, retrieved_chunks)
             )
 
+            projection_section = extract_projection_section(answer_body)
+
             validation = validate_answer(
-                answer_with_citations,
+                projection_section,
                 citation_map,
-                retrieved_chunks
+                retrieved_chunks,
+                answer_with_citations
             )
 
-            if not model_bad and validation["valid"]:
+            print("Validation result:", validation)
+            if validation["valid"]:
                 validated = True
                 final_answer = answer_with_citations
                 break
 
             repair_reasons = []
-            if model_bad:
-                repair_reasons.append("Model flagged answer as invalid/uncertain")
             if not validation["valid"]:
                 repair_reasons.extend(validation.get("errors", []))
 
