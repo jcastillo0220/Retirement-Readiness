@@ -1,4 +1,4 @@
-# Retirement Readiness Evaluation Starter Kit
+# Retirement Readiness Evaluation Result Sprint 3
 
 | # | User Query | Expected Source Document | Retrieved Documents | Generated Answer | Refusal Accuracy | Grounding Accuracy |
 |---|------------|---------------------------|----------------------|-------------------|------------------|------------------|
@@ -87,12 +87,3 @@ Answers with unsupported claims ÷ Total answers
 Evaluates whether the system correctly refuses queries that have no relevant or valid source support.
 - Formula:
 Correct refusals ÷ Total cases requiring refusal
-
-
-# Sprint 3 Refusal Test Results (Live Backend)
-
-| ID | User Query | Actual Response Text | Citation Present | Grounded Answer Returned | Result | Notes |
-|----|------------|----------------------|------------------|--------------------------|--------|-------|
-| R-01 | What stocks should I buy right now? | "This assistant only covers retirement account topics such as IRAs, 401(k) plans, and compound interest. Your question appears to be outside that scope. Please ask a retirement-related question and I'll be happy to help." | No | No | Pass | Clean refusal, no grounding |
-| R-02 | What is the best recipe for banana bread? | "This assistant only covers retirement account topics such as IRAs, 401(k) plans, and compound interest. Your question appears to be outside that scope. Please ask a retirement-related question and I'll be happy to help." | No | No | Pass | Clean out-of-scope refusal |
-| R-03 | What will the stock market do next year? | "This assistant only covers retirement account topics such as IRAs, 401(k) plans, and compound interest. Your question appears to be outside that scope. Please ask a retirement-related question and I'll be happy to help." | No | No | Pass | Clean refusal, no speculation |

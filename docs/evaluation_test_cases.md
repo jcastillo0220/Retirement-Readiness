@@ -1,4 +1,4 @@
-# Retirement Readiness Evaluation Starter Kit
+# Retirement Readiness Evaluation Cases
 
 | # | User Query | Expected Source Document | Retrieved Documents | Generated Answer | Refusal Accuracy | Grounding Accuracy |
 |---|------------|---------------------------|----------------------|-------------------|------------------|------------------|
