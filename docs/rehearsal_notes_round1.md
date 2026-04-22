@@ -1,19 +1,24 @@
-GOAL FOR REHEARSAL 1
+## End-to-End Demo Rehearsal Round 1
 
-Full 8–10 minute run-through following Milestone_2_Demo_Script.md. Both team laptops, one as backup. Time it. Note every UI glitch, every awkward pause. 
+# Demo Scenario 1 — Basic Definition Question (Roth IRA)
+Answer produced 
 
-About 3 min: overall design. What the product does, the core pipeline, and the architectural decisions that matter (retrieval strategy, validator or grounding approach, refusal policy). No code walkthroughs.
+# Demo Scenario 2 — Basic Definition Question (401(k))
 
-About 4 min: individual contributions. Every team member speaks briefly about what they personally owned this semester. Plan what you will say, roughly 45 to 60 seconds each.
+# Demo Scenario 3 — Basic Definition Question (Rollover IRA)
 
-About 4 min: live demo of the highlights. Pick 2 or 3 scenarios from your existing demo script. Required: at least one refusal or failure case and at least one end-to-end grounded answer. Do not spend this time on UI polish.
+# Demo Scenario 4 — Basic Definition Question (Traditional IRA)
 
-About 1 min: Q&A, included in the 12 minutes.
+# Demo Scenario 5 — Basic Definition Question (Roth 401k)
 
-Backup plan: have a prerecorded screen capture of the working path ready in case the live demo fails. Internet or API hiccups are not an excuse on demo day.
+# Demo Scenario 6 — Free-Text Question
 
-Slides and runbook: not due before the presentation, but both are required artifacts in the final deliverables package due May 3. Save them under docs/Final_Demo/ in your repo.
+# Demo Scenario 7 — Repair Loop Demonstration
 
-Avoid: narrating code, reading slides verbatim, skipping the refusal case, opening with missing features. Present the version you are proud of.
+# Demo Scenario 8 — Out-of-Scope Refusal (Live)
 
-WILL UPDATE SOON.
+# Demo Scenario 9 — Personalized Scenario Engine
+
+# Demo Scenario 10 — Source Verification
+
+# Demo Scenario 11 — Fallback Behavior
