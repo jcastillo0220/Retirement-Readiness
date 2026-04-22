@@ -200,7 +200,12 @@ export default function AIChat() {
         <ScenarioForm onSubmit={handleScenario} loading={loading} />
 
         {selectedQuestion && <div style={selectedQuestionStyle}>{selectedQuestion}</div>}
-        {error && <div style={errorStyle}>{error}</div>}
+        
+        {error && (
+          <div style={errorStyle}>
+            {error}
+          </div>
+        )}
 
         {loading && (
           <div style={{ ...bubbleStyle, opacity: 0.6 }}>
