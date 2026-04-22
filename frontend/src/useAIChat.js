@@ -79,7 +79,18 @@ export function useAIChat() {
       ]);
     } catch (err) {
       if (id === requestIdRef.current) {
-        setError(err?.message || "Something went wrong.");
+        // Detect network drop or backend offline
+        if (err?.message?.includes("Failed to fetch")) {
+          setError("The backend is not reachable. It may be offline or there is a network issue.");
+        } 
+        // Detect 500 or other server errors
+        else if (err?.message?.includes("500")) {
+          setError("The backend returned an error (500). Please try again.");
+        } 
+        // Fallback
+        else {
+          setError("The backend is not working properly. Please try again.");
+        }
       }
     } finally {
       if (id === requestIdRef.current) setLoading(false);
