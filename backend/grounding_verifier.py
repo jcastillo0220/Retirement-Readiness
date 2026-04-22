@@ -73,52 +73,74 @@ STOPWORDS = {
  
 def extract_key_phrases(answer: str) -> list:
     """
-    Extract meaningful 3-4 word content phrases from the answer body.
- 
-    Design decisions to improve grounding accuracy:
-    - Clean answer first (remove citation/sources lines)
-    - Use 3-4 word sliding window instead of long regex captures
-    - Filter phrases that are all stopwords
-    - Require at least 2 non-stopword content words per phrase
-    - Cap at 15 phrases to avoid checking noise
+    Extract meaningful semantic phrases WITHOUT external NLP modules.
+    Uses simple heuristics:
+    - capture noun-like spans (word sequences ending in nouns)
+    - capture verb + object patterns
+    - avoid overlapping sliding windows
+    - avoid stopword-only phrases
     """
-    cleaned = clean_answer_for_grounding(answer)
- 
-    # Tokenise into words
-    words = re.findall(r"[A-Za-z][a-z]*(?:'[a-z]+)?|\d+(?:\.\d+)?%?|\$\d[\d,]*", cleaned)
-    if len(words) < 3:
+
+    text = clean_answer_for_grounding(answer)
+    if not text:
         return []
- 
+
+    # Tokenize into simple words
+    words = re.findall(r"[A-Za-z][a-z']+", text)
+
+    # Basic POS-like heuristics
+    # Words that often behave like nouns
+    noun_endings = ("ion", "ment", "ness", "ity", "ship", "age", "ance", "ence")
+    noun_like = lambda w: (
+        w.endswith(noun_endings)
+        or w in {"money", "taxes", "withdrawals", "retirement", "income", "contributions"}
+    )
+
+    # Words that often behave like verbs
+    verb_like = lambda w: (
+        w in {"contribute", "withdraw", "pay", "paid", "earn", "grow", "receive"}
+    )
+
     phrases = []
     seen = set()
- 
-    # Sliding window: extract 3-word and 4-word phrases
-    for window in (3, 4):
-        for i in range(len(words) - window + 1):
-            chunk = words[i: i + window]
-            phrase = " ".join(chunk)
- 
-            # Skip if already seen
-            if phrase.lower() in seen:
+
+    # 1. Extract noun-like spans (2–6 words)
+    for i in range(len(words)):
+        for j in range(i + 1, min(i + 6, len(words))):
+            span = words[i:j]
+            if len(span) < 2:
                 continue
- 
-            # Count how many non-stopword, non-trivial words are in the phrase
-            content_words = [
-                w for w in chunk
-                if w.lower() not in STOPWORDS and len(w) > 2
-            ]
- 
-            # Require at least 2 content words in the phrase
-            if len(content_words) < 2:
+
+            # Must end in a noun-like word
+            if not noun_like(span[-1]):
                 continue
- 
-            # Skip phrases that are purely numeric or single-char tokens
-            if all(re.match(r"^[\d%$,.]+$", w) for w in chunk):
+
+            # Must contain at least 2 content words
+            content = [w for w in span if w.lower() not in STOPWORDS]
+            if len(content) < 2:
                 continue
- 
-            seen.add(phrase.lower())
-            phrases.append(phrase)
- 
+
+            phrase = " ".join(span)
+            low = phrase.lower()
+            if low not in seen:
+                seen.add(low)
+                phrases.append(phrase)
+
+    # 2. Extract verb + object patterns
+    for i in range(len(words) - 1):
+        if verb_like(words[i]):
+            # verb + next 1–3 words
+            for j in range(i + 1, min(i + 4, len(words))):
+                span = words[i:j]
+                content = [w for w in span if w.lower() not in STOPWORDS]
+                if len(content) < 2:
+                    continue
+                phrase = " ".join(span)
+                low = phrase.lower()
+                if low not in seen:
+                    seen.add(low)
+                    phrases.append(phrase)
+
     return phrases[:15]
  
  
