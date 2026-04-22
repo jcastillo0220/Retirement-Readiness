@@ -172,17 +172,6 @@ This shows the project’s safety and reliability features working end‑to‑en
 ### 13. Demo Scenario 8 — Personalized Scenario Engine
 
 **User action**
-Open the Personalized Scenario and enter:  
-- Age: 20
-- Retirement Age: 65
-- Annual Income: 70,000
-- Current Savings: 2,000
-- Monthly Contribution: 300  
-Then click Run Scenario
-
-### 10. Demo Scenario 4 — Personalized Scenario Engine
-
-**User action**
 
 Open the Personalized Scenario: Compound Interest section and enter:
 
