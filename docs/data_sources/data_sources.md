@@ -4,8 +4,8 @@
 
 ## Source Registry
 
-| Source | Category | Source Type | URL | Date Collected | MVP Inclusion |
-|--------|----------|-------------|-----|----------------|---------------|
+| Source | Source Category | Source Type | URL | Date Collected | MVP Inclusion Status |
+|--------|------------------|-------------|-----|----------------|----------------------|
 | Fidelity — Retirement Accounts | Numeric rules | Consumer financial education web article | https://www.fidelity.com/learning-center/smart-money/retirement-accounts | February 2, 2026 | Yes |
 | Fidelity — Roth IRA | Numeric rules | Consumer financial education web article | https://www.fidelity.com/learning-center/smart-money/what-is-a-roth-ira | February 2, 2026 | Yes |
 | Fidelity — Traditional IRA | Numeric rules | Consumer financial education web article | https://www.fidelity.com/learning-center/smart-money/what-is-an-ira | February 2, 2026 | Yes |
@@ -20,7 +20,6 @@
 | IRS — Rollover Distributions | Authoritative rules | U.S. government regulatory publication | https://www.irs.gov/retirement-plans/plan-participant-employee/rollovers-of-retirement-plan-and-ira-distributions | April 2026 | Planned |
 | IRS — Designated Roth Accounts | Authoritative rules | U.S. government regulatory publication | https://www.irs.gov/retirement-plans/designated-roth-accounts | April 2026 | Planned |
 | IRS — Retirement Topics: Contributions | Authoritative rules | U.S. government regulatory publication | https://www.irs.gov/retirement-plans/retirement-topics-contributions | April 2026 | Planned |
-
 ---
 
 ## Source Profiles

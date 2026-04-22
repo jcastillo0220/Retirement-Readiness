@@ -1,6 +1,9 @@
 ## Retirement Readiness — Demo Script
+
 ### Purpose
 This demo script shows how to set up, run, and test the Retirement Readiness application in a way that is easy to reproduce. The goal is for another person to follow these steps and get the same results.
+
+---
 
 ### 1. Prerequisites
 Make sure the following are installed:
@@ -9,167 +12,208 @@ Make sure the following are installed:
 - Node.js 18+
 - Git
 
+---
 
 ### 2. Project Setup
-- Clone the repository
-- bashgit clone <repository-url>
-- cd Retirement-Readiness
+- Clone the repository  
+- git clone <repository-url>  
+- cd Retirement-Readiness  
+
+---
 
 ### 3. Backend Setup
-- Navigate to backend
-    - bashcd backend
-- Create virtual environment
-    - bashpython3 -m venv .venv
-- Activate virtual environment
-- Mac/Linux:
-    - bashsource .venv/bin/activate
-- Windows:
-    - bash.venv\Scripts\activate
-- Install dependencies
-    - bashpip install -r requirements.txt
-- Create .env
-- Create a file at backend/.env and add the following:
-    - envGOOGLE_API_KEY=your_api_key_here
+- Navigate to backend  
+  - cd backend  
+- Create virtual environment  
+  - python3 -m venv .venv  
+- Activate virtual environment  
+  - Mac/Linux: source .venv/bin/activate  
+  - Windows: .venv\Scripts\activate  
+- Install dependencies  
+  - pip install -r requirements.txt  
+
+- Create .env  
+- Create a file at backend/.env and add:
+  GOOGLE_API_KEY=your_api_key_here
 
 Important: Do not commit .env — it is ignored by .gitignore.
 
+---
 
 ### 4. Start the Backend
-- From the backend/ folder, run:
-  - bash python3 -m uvicorn endpoint:app --reload
+From the backend/ folder, run:
 
-### Expected result:
+python3 -m uvicorn endpoint:app --reload
 
-- The backend starts without errors
-- The local API is available at: http://127.0.0.1:8000
+Expected result:
+- Backend starts without errors  
+- API available at: http://127.0.0.1:8000  
 
-Optional verification — open this in a browser:
-http://127.0.0.1:8000/health 
+Optional:
+http://127.0.0.1:8000/health  
 
-Expected: a JSON response confirming the backend is running.
+---
 
 ### 5. Frontend Setup
-Open a new terminal and navigate to the frontend folder:
-- bashcd frontend
-- Install dependencies
-    - bashnpm install
-- Start the frontend
-    - bashnpm run dev
+Open a new terminal:
 
-### Expected result:
-- Vite starts successfully
-- The app is available at: http://localhost:5173
+cd frontend  
+npm install  
+npm run dev  
 
+Expected result:
+- App runs at: http://localhost:5173  
 
-### 6. Demo Flow
-Follow the scenarios below in order.
+---
 
-### 7. Demo Scenario 1 — Basic Definition Question
+## 6. Demo Flow
 
-### User action
-- Click the button:
-  - **What is a Roth IRA?**
+---
 
-### Expected result
+### 7. Demo Scenario 1 — Roth IRA
+User Action:
+Click: What is a Roth IRA?
 
-- The application generates a retirement-related answer
-- The answer includes a citation section
-- The sources are clickable links
-- The answer shows as Validated when grounded in available sources
+Expected:
+- Grounded answer
+- Citations shown
+- Validated badge appears
 
-### What to point out
+---
 
-- The system can answer common retirement questions
-- Answers include source grounding
-- Users can click citation links to verify the information directly
+### 8. Demo Scenario 2 — 401(k)
+User Action:
+Click: What is a 401(k)?
 
-### 8. Demo Scenario 2 — Another Button-Based Question
+Expected:
+- Clear explanation
+- Citations displayed
 
-### User action
-- Click the button:
-  - **What is a 401(k)?**
+---
 
-### Expected result
+### 9. Demo Scenario 3 — Rollover IRA
+User Action:
+Click: What is a Rollover IRA?
 
-- The system returns a clear explanation
-- The answer includes citations when source support exists
-- The UI displays supported source links under the answer
+Expected:
+- Grounded explanation
+- Citations shown
 
-### What to point out
+---
 
-- The application supports multiple retirement concepts
-- It uses retrieval-based answering, not raw AI generation alone
+### 10. Demo Scenario 4 — Traditional IRA
+User Action:
+Click: What is a Traditional IRA?
 
+Expected:
+- Grounded explanation
+- Citations shown
 
-### 9. Demo Scenario 3 — Free-Text Question
+---
 
-### User action
-- Type the following into the text box and click Send:
+### 11. Demo Scenario 5 — Roth 401(k)
+User Action:
+Click: What is a Roth 401(k)?
 
-  - **What is the difference between a Roth IRA and a Traditional IRA?**
+Expected:
+- Grounded explanation
+- Citations shown
 
-### Expected result
+---
 
-- The application generates a comparison answer
-- If enough grounded source content exists, citations appear
-- If not, the app falls back to general financial knowledge with a note
+### 12. Demo Scenario 6 — Free-Text Question
+User Action:
+Type and send:
+What is the difference between a Roth IRA and a Traditional IRA?
 
-### What to point out
+Expected:
+- Comparison answer
+- May include citations
+- Shows system handles custom input
 
-- Users are not limited to the preset buttons
-- The system supports fully custom questions
-- The fallback system ensures a helpful answer is always returned
+---
 
+### 13. Demo Scenario 7 — Out-of-Scope Refusal (Live)
+User Action:
+Type and send:
+What is the best recipe for banana bread?
 
-### 10. Demo Scenario 4 — Personalized Scenario Engine
+Expected:
+- System refuses to answer
+- Displays out-of-scope message
 
-### User action
-Open the Personalized Scenario: Compound Interest section and enter:
-FieldValueAge20Retirement Age65Annual Income70,000Current Savings2,000Monthly Contribution300
-Then click Run Scenario.
+Example Output:
+This assistant only covers retirement account topics such as IRAs, 401(k) plans, and compound interest. Your question appears to be outside that scope. Please ask a retirement-related question and I'll be happy to help.
 
-### Expected result
+What to point out:
+- No hallucination
+- No citations
+- Clear scope enforcement
 
-- The app calculates a projected retirement balance
-- The result includes a short plain-English explanation
-- The response appears in the same styled answer area as other answers
+---
 
-### What to point out
+### 14. Demo Scenario 8 — Repair Loop Demonstration
+User Action:
+Type and send:
+How much can I contribute to a Roth IRA this year?
 
-- This is not just a Q&A bot — it includes a personalized projection workflow
-- The backend combines compound interest calculation logic with source-based educational context
+Expected:
+- Initial answer may contain unsupported number
+- Validation fails
+- Repair loop triggers
+- Final answer is corrected and validated
 
+---
 
-### 11. Demo Scenario 5 — Source Verification
+### 15. Demo Scenario 9 — Personalized Scenario Engine
+User Action:
+Enter:
 
-### User action
-Under any generated answer, click one of the source links.
+Age: 20  
+Retirement Age: 65  
+Annual Income: 70000  
+Current Savings: 2000  
+Monthly Contribution: 300  
 
-### Expected result
+Click Run Scenario
 
-- The source opens in a new browser tab
-- The user can inspect the referenced material directly
+Expected:
+- Returns projected balance
+- Shows explanation
 
-### What to point out
+---
 
-- The project supports full transparency
-- Users can verify exactly where the information came from
-- This reduces black-box AI behavior and builds trust
+### Mathematical Verification
 
-### 12. Demo Scenario 6 — Fallback Behavior
+Future Value Formula:
 
-### User action
-Type the following into the text box and click Send:
+Future Value = P(1 + r/12)^(12t) + PMT * [((1 + r/12)^(12t) − 1) / (r/12)]
 
-- **How should I think about retirement planning when I am just starting my career?**
+Excel Verification:
 
-### Expected result
+=ROUND((1*(1+3.5%/12)^(40*12)) + (500*(((1+3.5%/12)^(40*12)-1)/(3.5%/12))),2)
 
-- The system still returns a helpful answer
-- The response may indicate it is based on general financial knowledge rather than directly grounded project sources
-- The application does not fail or return an empty response
+Expected Output:
+$522,337.49
 
-### What to point out
+---
 
-- The fallback system prevents dead ends
-- The app remains useful even when exact source retrieval is weak
+### 16. Demo Scenario 10 — Source Verification
+User Action:
+Click any source link
+
+Expected:
+- Opens source in browser
+- Confirms transparency
+
+---
+
+### 17. Demo Scenario 11 — Fallback Behavior
+User Action:
+Type and send:
+How should I think about retirement planning?
+
+Expected:
+- System returns helpful answer
+- May use general knowledge
+- No failure
