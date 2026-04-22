@@ -169,18 +169,18 @@ The repair loop produces a clean, grounded, source‑aligned answer
 This shows the project’s safety and reliability features working end‑to‑end
 
 ### 13. Demo Scenario 8 — Out-of-Scope Refusal
-User Action:
+**User Action:**
 Type and send:
 What is the best recipe for banana bread?
 
-Expected:
+**Expected:**
 - System refuses to answer
 - Displays out-of-scope message
 
-Example Output:
+**Example Output:**
 This assistant only covers retirement account topics such as IRAs, 401(k) plans, and compound interest. Your question appears to be outside that scope. Please ask a retirement-related question and I'll be happy to help.
 
-What to point out:
+**What to point out:**
 - No hallucination
 - No citations
 - Clear scope enforcement
