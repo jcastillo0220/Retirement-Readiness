@@ -64,112 +64,161 @@ Open a new terminal and navigate to the frontend folder:
 ### 6. Demo Flow
 Follow the scenarios below in order.
 
-### 7. Demo Scenario 1 — Basic Definition Question
+### 7. Demo Scenario 1 — Basic Definition Question (Roth IRA)
+**User Action**  
+Click the button:
+- What is a Roth IRA?
 
-### User action
-- Click the button:
-  - **What is a Roth IRA?**
-
-### Expected result
-
-- The application generates a retirement-related answer
+**Expected result:**
+- The application generates a retirement‑related answer
 - The answer includes a citation section
 - The sources are clickable links
-- The answer shows as Validated when grounded in available sources
+- The answer shows as Validated when grounded
 
-### What to point out
-
+**What to point out**
 - The system can answer common retirement questions
 - Answers include source grounding
-- Users can click citation links to verify the information directly
+- Users can verify information directly
 
-### 8. Demo Scenario 2 — Another Button-Based Question
+### 8. Demo Scenario 2 — Basic Definition Question (401(k))
+**User action**
+Click the button:
+- What is a 401(k)?
 
-### User action
-- Click the button:
-  - **What is a 401(k)?**
-
-### Expected result
-
+**Expected result**
 - The system returns a clear explanation
-- The answer includes citations when source support exists
-- The UI displays supported source links under the answer
+- The answer includes citations when supported
+- The UI displays source links
 
-### What to point out
-
+**What to point out**
 - The application supports multiple retirement concepts
-- It uses retrieval-based answering, not raw AI generation alone
+- Retrieval-based answering, not raw AI
 
+### 9. Demo Scenario 3 — Basic Definition Question (Rollover IRA)
+**User action**
+Click the button:
+- What is a Rollover IRA?
 
-### 9. Demo Scenario 3 — Free-Text Question
+**Expected result**
+- The system returns a grounded explanation
+- Citations appear if supported by retrieved chunks
 
-### User action
+**What to point out**
+- The app covers rollover‑specific retirement accounts
+- Retrieval ensures accuracy across plan types
+
+### 10. Demo Scenario 4 — Basic Definition Question (Traditional IRA)
+**User action**
+Click the button:
+- What is a Traditional IRA?
+
+**Expected result**
+- The system returns a grounded explanation
+- Citations appear if supported by retrieved chunks
+
+**What to point out**
+- This covers the second major IRA type
+- Retrieval ensures accuracy and avoids hallucination
+
+### 10. Demo Scenario 5 — Basic Definition Question (Roth 401k)
+**User action**
+Click the button:
+- What is a Roth 401(k)?
+
+**Expected result**
+- The system returns a grounded explanation
+- Citations appear if supported
+
+**What to point out**
+- The demo now covers all five required retirement topics
+- Consistent UI behavior across all plan buttons
+
+### 11. Demo Scenario 6 — Free-Text Question
+
+**User action**
 - Type the following into the text box and click Send:
-
   - **What is the difference between a Roth IRA and a Traditional IRA?**
 
-### Expected result
-
+**Expected result**
 - The application generates a comparison answer
 - If enough grounded source content exists, citations appear
 - If not, the app falls back to general financial knowledge with a note
 
-### What to point out
-
+**What to point out**
 - Users are not limited to the preset buttons
 - The system supports fully custom questions
 - The fallback system ensures a helpful answer is always returned
 
+### 12. Demo Scenario 7 — Repair Loop Demonstration
+**User action**
+Type the following into the text box and click Send:
+- **How much can I contribute to a Roth IRA this year if I’m 25 and make $90,000?**
 
-### 10. Demo Scenario 4 — Personalized Scenario Engine
+**Expected result**
+- The first-pass answer will include a specific contribution limit number (e.g., “$6,500”)
+- That number does not appear in the retrieved source chunks, so:
+- The numeric validator fails
+- The grounding verifier may also flag unsupported phrases
+- The system automatically triggers the repair loop
+- The repaired answer removes unsupported numbers and aligns with retrieved sources
+- The final answer passes validation and is returned to the UI
 
-### User action
-Open the Personalized Scenario: Compound Interest section and enter:
-FieldValueAge20Retirement Age65Annual Income70,000Current Savings2,000Monthly Contribution300
-Then click Run Scenario.
+**What to point out**
+- This scenario demonstrates the full validation pipeline
+- The system detects:
+    - Hallucinated numbers
+    - Unsupported claims
+    - Mismatched citations
+The repair loop produces a clean, grounded, source‑aligned answer
+This shows the project’s safety and reliability features working end‑to‑end
 
-### Expected result
 
+### 13. Demo Scenario 8 — Personalized Scenario Engine
+
+**User action**
+Open the Personalized Scenario and enter:  
+- Age: 20
+- Retirement Age: 65
+- Annual Income: 70,000
+- Current Savings: 2,000
+- Monthly Contribution: 300  
+Then click Run Scenario
+
+**Expected result**
 - The app calculates a projected retirement balance
 - The result includes a short plain-English explanation
 - The response appears in the same styled answer area as other answers
 
-### What to point out
-
+**What to point out**
 - This is not just a Q&A bot — it includes a personalized projection workflow
 - The backend combines compound interest calculation logic with source-based educational context
 
 
-### 11. Demo Scenario 5 — Source Verification
+### 14. Demo Scenario 9 — Source Verification
 
-### User action
+**User action**
 Under any generated answer, click one of the source links.
 
-### Expected result
-
+**Expected result**
 - The source opens in a new browser tab
 - The user can inspect the referenced material directly
 
-### What to point out
-
+**What to point out**
 - The project supports full transparency
 - Users can verify exactly where the information came from
 - This reduces black-box AI behavior and builds trust
 
-### 12. Demo Scenario 6 — Fallback Behavior
+### 15. Demo Scenario 10 — Fallback Behavior
 
-### User action
+**User action**
 Type the following into the text box and click Send:
-
 - **How should I think about retirement planning when I am just starting my career?**
 
-### Expected result
-
+**Expected result**
 - The system still returns a helpful answer
 - The response may indicate it is based on general financial knowledge rather than directly grounded project sources
 - The application does not fail or return an empty response
 
-### What to point out
-
+**What to point out**
 - The fallback system prevents dead ends
 - The app remains useful even when exact source retrieval is weak
