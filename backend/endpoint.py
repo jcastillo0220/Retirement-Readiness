@@ -331,9 +331,6 @@ Question:
  
 Provided Sources:
 {source_context}
- 
-After the answer, output one final line of JSON in this exact format:
-{{"validation":"valid","confidence":4}}
 """.strip()
  
     current_raw = ask_ai(single_prompt)

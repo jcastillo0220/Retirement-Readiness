@@ -196,7 +196,7 @@ Open the Personalized Scenario: Compound Interest section and enter:
 |Age | 20 |
 |Retirement Age | 65 |
 |Annual Income | 70,000 |
-|Current Savings | 2,000 |
+|Current Savings | 1 |
 |Monthly Contribution | 300 |
 
 Then click Run Scenario.

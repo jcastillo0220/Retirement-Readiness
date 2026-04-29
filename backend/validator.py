@@ -93,8 +93,6 @@ Rules:
 - Stay accurate
 - Prefer the provided sources when relevant
 - No hallucinations
-- End with one final JSON line in this exact format:
-{{"validation":"valid","confidence":4}}
 """.strip()
 
 def build_repair_prompt_scenario(user_question: str, bad_answer: str, repair_reasons: list, source_context: str) -> str:
@@ -145,8 +143,6 @@ Rules:
 - Prefer the provided sources when relevant
 - No hallucinations
 - End with one final JSON line in this exact format:
-Use markdown formatting for the answer.
-{{"validation":"valid","confidence":4}}
 """.strip()
  
  
