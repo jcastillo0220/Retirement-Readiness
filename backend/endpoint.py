@@ -125,7 +125,7 @@ def ask_ai(prompt: str, retries=3):
  
  
 def is_definition_question(q: str) -> bool:
-    if q == "traditional_ira" or q == "roth_ira" or q == "rollover_ira" or q == "401k" or q == "roth_ira_and_roth_401k":
+    if q == "traditional_ira" or q == "roth_ira" or q == "rollover_ira":
         return True
     else:
         return False
